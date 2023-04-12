@@ -3,14 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import concurrent.futures
-import pickle
 import os
 
 MAX_THREADS = 100
 
 def main():
-    compress_csv()
-    # web_scraping()
+    # DO NOT UNCOMMENT THE FOLLOWING LINE WITHOUT CAUTION
+    # compress_csv()
+
+    web_scraping()
 
 def merge_data():
     # Most datasets have id as the common denominator to merge on
