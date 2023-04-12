@@ -4,7 +4,7 @@ import os
 def main():
     # DO NOT UNCOMMENT THE FOLLOWING LINE WITHOUT CAUTION
     # compress_csv()
-    # merge_data()
+    merge_data()
     pass
 
 def merge_data():
@@ -28,7 +28,7 @@ def merge_data():
     master_df.drop(['id', 'movieId'], axis=1, inplace=True)
     
     # Save merged dataframe to CSV
-    master_df.to_csv("master_dataset.csv", index=False)
+    master_df.to_csv("data/master_dataset.csv.gz", index=False, compression='gzip')
 
 def compress_csv():
     for filename in os.listdir('data'):
