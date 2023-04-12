@@ -26,7 +26,7 @@ def compress_csv():
         df.to_csv(f'{filename}.gz', compression='gzip')
 
 def web_scraping():
-    imdb_ids = pd.read_csv('data/movies_metadata.csv.gz', compression='gzip', usecols=['imdb_id'])['imdb_id'].tolist()[:10]
+    imdb_ids = pd.read_csv('data/movies_metadata.csv.gz', compression='gzip', usecols=['imdb_id'])['imdb_id'].tolist()[:100]
     
     print('Starting to scrape quickly...')
     t0 = time.time()
@@ -34,11 +34,11 @@ def web_scraping():
     t1 = time.time()
     print(f"    Took {t1-t0} seconds to scrape {len(imdb_ids)} pages.")
 
-    print('Starting to scrape slowly...')
-    t0 = time.time()
-    ratings = download_data_slow(imdb_ids)
-    t1 = time.time()
-    print(f"    Took {t1-t0} seconds to scrape {len(imdb_ids)} pages.")
+    # print('Starting to scrape slowly...')
+    # t0 = time.time()
+    # ratings = download_data_slow(imdb_ids)
+    # t1 = time.time()
+    # print(f"    Took {t1-t0} seconds to scrape {len(imdb_ids)} pages.")
 
     return ratings
 
