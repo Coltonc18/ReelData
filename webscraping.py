@@ -6,8 +6,9 @@ import concurrent.futures
 from threading import Thread
 import _thread
 from queue import Queue
+import os
 
-MAX_THREADS = 1024
+MAX_THREADS = 64
 csv_queue = Queue()
 
 def main():
@@ -24,22 +25,20 @@ def consume_queue():
                     f.write(item)
 
 def web_scraping():
-    print('Entering Scraping')
-    with open('data/imdb_ratings.csv', 'w') as f:
-        f.write('imdb_id,rating\n')
+    print('Setting up csv files...')
+    if os.stat('data/imdb_ratings.csv').st_size == 0:
+        with open('data/imdb_ratings.csv', 'w') as f:
+            f.write('imdb_id,rating\n')
     
-    print('Parsing csv')
     imdb_ids = pd.read_csv('data/movies_metadata.csv.gz', compression='gzip', usecols=['imdb_id'])['imdb_id'].tolist()
 
-    print('Initializing writer')
-    # writer = Thread(target=consume_queue())
+    print('Starting writer thread...')
     _thread.start_new_thread(consume_queue, ())
-    # print('Making Daemonic')
+    # writer = Thread(target=consume_queue())
     # writer.setDaemon(True)
-    # print('Starting Writer')
     # writer.start()
     
-    print('Starting to scrape quickly...')
+    print('Starting to scrape...')
     t0 = time.time()
     ratings = download_data(imdb_ids)
     t1 = time.time()
@@ -63,17 +62,14 @@ def access_page(id):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
                'set-cookie': f'session-id={session_id}; Domain=.imdb.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
     page = requests.get(url=url, headers=headers)
-    if page.status_code == 200:
-        soup = BeautifulSoup(page.content, 'html.parser')
-        # If more data was wanted from this page, this is where it should be scraped
-        # with open('data/imdb_ratings.csv', 'a') as f:
-        #     f.write(f'{id},{soup.select("span.sc-bde20123-1.iZlgcd")[0].get_text().strip()}\n')
-        csv_queue.put(f'{id},{soup.select("span.sc-bde20123-1.iZlgcd")[0].get_text().strip()}\n')
-    elif page.status_code == 503:
-        print('Error 503: Service Unavailible. Please try again later')
-        exit(503)
-    else:
+    while page.status_code != 200:
         print(id, 'not accessible. Error code:', page.status_code)
+        time.sleep(10)
+        page = requests.get(url=url, headers=headers)
+
+    soup = BeautifulSoup(page.content, 'html.parser')
+    # If more data was wanted from this imdb page, this is where it should be scraped
+    csv_queue.put(f'{id},{soup.select("span.sc-bde20123-1.iZlgcd")[0].get_text().strip()}\n')
 
 def download_data(imdb_ids):
     threads = min(MAX_THREADS, len(imdb_ids))
@@ -81,6 +77,7 @@ def download_data(imdb_ids):
         executor.map(access_page, imdb_ids)
     csv_queue.put("done")
 
+# Used for comparison to multithreaded solution
 def download_data_slow(imdb_ids):
     for id in imdb_ids:
         access_page(id)
