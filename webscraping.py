@@ -14,7 +14,9 @@ csv_queue = Queue()
 
 
 def main():
-    web_scraping_tomatoes()
+    # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKED UP
+    # web_scraping_tomatoes()
+    pass
 
 def consume_queue(filepath):
     with open(filepath, 'a') as f:
