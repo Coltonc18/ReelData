@@ -35,7 +35,7 @@ def web_scraping_tomatoes(clear=True):
             f.write('title,rating\n')
         print('Cleared CSV')
     
-    titles = pd.read_csv('data/movies_metadata.csv.gz', compression='gzip', usecols=['original_title'])['original_title']
+    titles = pd.read_csv('data/movies_metadata.csv.gz', usecols=['original_title'])['original_title']
     titles = titles.apply(lambda a: str(a).lower().replace(' ', '_')).tolist()
 
     print('Starting writer thread...')
@@ -90,7 +90,7 @@ def web_scraping_imdb():
         with open('data/imdb_ratings.csv', 'w') as f:
             f.write('imdb_id,rating\n')
     
-    imdb_ids = pd.read_csv('data/movies_metadata.csv.gz', compression='gzip', usecols=['imdb_id'])['imdb_id'].tolist()
+    imdb_ids = pd.read_csv('data/movies_metadata.csv.gz', usecols=['imdb_id'])['imdb_id'].tolist()
 
     print('Starting writer thread...')
     Thread(target=consume_queue, args=('data/imdb_ratings.csv',)).start()
@@ -111,7 +111,6 @@ def web_scraping_imdb():
     # print(f"    Took {t1-t0} seconds to scrape {len(imdb_ids)} pages.")
 
     return ratings
-
 
 def access_page_imdb(id):
     url = 'https://imdb.com/title/' + id
