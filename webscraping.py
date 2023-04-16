@@ -14,7 +14,7 @@ csv_queue = Queue()
 
 
 def main():
-    # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKED UP
+    # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
     # web_scraping_tomatoes()
     pass
 
@@ -74,6 +74,16 @@ def access_page_tomatoes(title):
 
     csv_queue.put(f'{title},{data["scoreboard"]["tomatometerScore"]["value"]}\n')
 
+
+'''
+The following methods containing the suffix "_imdb" will be deleted soon.
+They aim to scrape imdb.com, which is not only impossible because of the fragility of their servers,
+but also because the ratings on imdb.com are given by users, not experts, and therefore do not
+provide any contrastable data for us to use in conjunction with the data we have already collected.
+
+These methods represent upwards of 12 hours of hard work and will be mourned greatly.
+May they forever rest in peace.
+'''
 def web_scraping_imdb():
     print('Setting up csv files...')
     if os.stat('data/imdb_ratings.csv').st_size == 0:
