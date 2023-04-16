@@ -1,13 +1,14 @@
+import concurrent.futures
+import json
+import os
+import re
+import time
+from queue import Queue
+from threading import Thread
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import time
-import concurrent.futures
-from threading import Thread
-from queue import Queue
-import os
-import json
-import re
 
 MAX_THREADS = 1000
 csv_queue = Queue()
