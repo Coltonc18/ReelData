@@ -1,5 +1,8 @@
 class Graphs:
     def __init__(self, *args):
+        self.create_graphs(*args)
+
+    def create_graphs(self, *args):
         if 'xyz' in args:
             self.graph_xyz()
         elif 'abc' in args:
