@@ -9,7 +9,7 @@ class Graphs:
     def create_graphs(self, *args):
         for arg in args:
             try:
-                self.functions[arg]
+                self.functions[arg]()
             except KeyError:
                 print(f'Function {arg} does not exist')
 
