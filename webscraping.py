@@ -13,12 +13,19 @@ from bs4 import BeautifulSoup
 MAX_THREADS = 1000
 csv_queue = Queue()
 
-
+'''
+Main is for testing purposes only
+DELETE BEFORE SUBMISSION AND CALL FROM main.py
+'''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
     # web_scraping_tomatoes()
     pass
 
+'''
+Using a thread, empties the objects in csv_queue into the designated filepath
+Will stop running when "done" is placed into the Queue
+'''
 def consume_queue(filepath):
     with open(filepath, 'a') as f:
         while True:
@@ -29,6 +36,14 @@ def consume_queue(filepath):
                 else:
                     f.write(item)
 
+'''
+Prepares the tomatoes_ratings.csv file to be written to by a Thread
+Cleans the titles found in the movies_metadata.csv file and replaces spaces with underscores
+Times and calls the subsequent methods to scrape rottentomatoes.com
+Helper Methods: 
+    _download_data_tomatoes()
+    _access_page_tomatoes()
+'''
 def web_scraping_tomatoes(clear=True):
     print('Setting up csv files...')
     if clear:
@@ -44,19 +59,30 @@ def web_scraping_tomatoes(clear=True):
     
     print(f'Starting to scrape with up to {MAX_THREADS} threads...')
     t0 = time.time()
-    ratings = download_data_tomatoes(titles)
+    _download_data_tomatoes(titles)
     t1 = time.time()
     print(f"    Took {t1-t0} seconds to scrape {len(titles)} pages.")
 
-    return ratings
+'''
+Takes a list of titles from download_data_tomatoes()
 
-def download_data_tomatoes(titles):
+Creates a thread pool using the ThreadPoolExecutor and maps each thread to run _access_page_tomatoes()
+with each title in the list provided as the parameters to iterate through.
+'''
+def _download_data_tomatoes(titles):
     threads = min(MAX_THREADS, len(titles))
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-        executor.map(access_page_tomatoes, titles)
+        executor.map(_access_page_tomatoes, titles)
+    # Close the csv_writer thread when all pages have been scraped
     csv_queue.put("done")
 
-def access_page_tomatoes(title): 
+'''
+Takes a single title, cleans it from special characters and preceeding "the"s or "a"s, and scrapes
+https://rottentomatoes.com/m/title (if it exists) for the critic rating of that movie.
+
+Does an empty return if the page is not accessible and prints out the page's error message.
+'''
+def _access_page_tomatoes(title): 
     title = re.sub(r"['\".:,-]", '', title)
     title = title[4:] if title[:3] == 'the' else title
     title = title[2:] if title[:1] == 'a' else title
@@ -66,7 +92,6 @@ def access_page_tomatoes(title):
     page = requests.get(url=url)
     if page.status_code != 200:
         print(f'404: Page not Found ({title})') if page.status_code == 404 else 'Error (not 404)'
-        # print(title, 'not accessible. Error code:', page.status_code)
         return
 
     soup = BeautifulSoup(page.content, 'html.parser')
