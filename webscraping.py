@@ -10,7 +10,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-MAX_THREADS = 1000
+MAX_THREADS = 1
 csv_queue = Queue()
 
 '''
@@ -19,7 +19,7 @@ DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
-    # web_scraping_tomatoes()
+    web_scraping_tomatoes(verbose=False)
     pass
 
 '''
@@ -28,6 +28,7 @@ Will stop running when "done" is placed into the Queue
 '''
 def consume_queue(filepath):
     with open(filepath, 'a') as f:
+        # Run until "done" is passed into our Queue
         while True:
             if not csv_queue.empty():
                 item = csv_queue.get()
@@ -35,33 +36,41 @@ def consume_queue(filepath):
                     return
                 else:
                     f.write(item)
+            else:
+                # If the queue was empty, sleep for a second to save resources
+                time.sleep(1)
 
 '''
-Prepares the tomatoes_ratings.csv file to be written to by a Thread
-Cleans the titles found in the movies_metadata.csv file and replaces spaces with underscores
-Times and calls the subsequent methods to scrape rottentomatoes.com
+Prepares the tomatoes_ratings.csv file to be written to by a Thread.
+Cleans the titles found in the movies_metadata.csv file and replaces spaces with underscores.
+Times and calls the subsequent methods to scrape rottentomatoes.com.
+Prints out helpful information as the program runs if verbose is True.
 Helper Methods: 
     _download_data_tomatoes()
     _access_page_tomatoes()
 '''
-def web_scraping_tomatoes(clear=True):
-    print('Setting up csv files...')
+def web_scraping_tomatoes(clear=True, verbose=True):
+    # Sets up csv file to store critics' ratings
+    print('Setting up csv files...') if verbose else None
     if clear:
         with open('data/tomatoes_ratings.csv', 'w') as f:
             f.write('title,rating\n')
-        print('Cleared CSV')
+        print('Cleared CSV') if verbose else None
     
-    titles = pd.read_csv('data/movies_metadata.csv.gz', usecols=['original_title'])['original_title']
+    # Import the titles from movies_metadata and replace spaces with underscores
+    titles = pd.read_csv('data/movies_metadata.csv', usecols=['original_title'])['original_title']
     titles = titles.apply(lambda a: str(a).lower().replace(' ', '_')).tolist()
 
-    print('Starting writer thread...')
+    # Initializes a thread to constantly scan csv_queue for lines to add to the csv
+    print('Starting writer thread...') if verbose else None
     Thread(target=consume_queue, args=('data/tomatoes_ratings.csv',)).start()
     
-    print(f'Starting to scrape with up to {MAX_THREADS} threads...')
+    # Starts a timer and sends the titles to be scraped
+    print(f'Starting to scrape with up to {MAX_THREADS} threads...') if verbose else None
     t0 = time.time()
-    _download_data_tomatoes(titles)
+    _download_data_tomatoes(titles, verbose)
     t1 = time.time()
-    print(f"    Took {t1-t0} seconds to scrape {len(titles)} pages.")
+    print(f"    Took {t1-t0} seconds to scrape {len(titles)} pages.") if verbose else None
 
 '''
 Takes a list of titles from download_data_tomatoes()
@@ -69,10 +78,14 @@ Takes a list of titles from download_data_tomatoes()
 Creates a thread pool using the ThreadPoolExecutor and maps each thread to run _access_page_tomatoes()
 with each title in the list provided as the parameters to iterate through.
 '''
-def _download_data_tomatoes(titles):
+def _download_data_tomatoes(titles, verbose=True):
+    # We don't want to start 1000 threads if we are only scraping 5 titles
     threads = min(MAX_THREADS, len(titles))
+
+    # Initialize the ThreadPool to concurrently scrape many pages at once
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
         executor.map(_access_page_tomatoes, titles)
+
     # Close the csv_writer thread when all pages have been scraped
     csv_queue.put("done")
 
@@ -80,24 +93,37 @@ def _download_data_tomatoes(titles):
 Takes a single title, cleans it from special characters and preceeding "the"s or "a"s, and scrapes
 https://rottentomatoes.com/m/title (if it exists) for the critic rating of that movie.
 
-Does an empty return if the page is not accessible and prints out the page's error message.
+Does an empty return if the page is not accessible and prints out the page's error message (if verbose is True).
 '''
-def _access_page_tomatoes(title): 
+def _access_page_tomatoes(title, verbose=True):
+    # Remove any special characters that have been omitted from the url
     title = re.sub(r"['\".:,-]", '', title)
+    # Remove "the" and "a" if they are the first words of the title
     title = title[4:] if title[:3] == 'the' else title
     title = title[2:] if title[:1] == 'a' else title
 
+    # Append the title to the base url
+    # NOTE: Movies that have duplicate titles on rottentomatoes.com will not fit this url model
+    #       They have an identifying tag (7 digit number) as a prefix on the title, and therefore
+    #       cannot be scraped (for now) because we do not know how to get that tag
     url = 'https://rottentomatoes.com/m/' + title
 
+    # Send a request to the page
     page = requests.get(url=url)
+    # If we get an error code, print information and return
     if page.status_code != 200:
-        print(f'404: Page not Found ({title})') if page.status_code == 404 else 'Error (not 404)'
+        if verbose:
+            print(f'404: Page not Found ({title})') if page.status_code == 404 else 'Error (not 404)'
         return
 
+    # Parse the html from the page using the BeautifulSoup library
     soup = BeautifulSoup(page.content, 'html.parser')
-    
+
+    # Because the expert rating text is inside of a script, we need to use CSS selectors to find that script
+    # And then the json library to parse the script into a more readable object
     data = json.loads(soup.select('script#score-details-json[type="application/json"]')[0].text)
 
+    # Place the movie title, from the parsed json, into the CSV Writer Queue to be appended to the csv file
     csv_queue.put(f'{title},{data["scoreboard"]["tomatometerScore"]["value"]}\n')
 
 
