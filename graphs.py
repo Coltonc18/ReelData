@@ -2,8 +2,6 @@
 # conda install -c conda-forge altair vega_datasets
 import altair as alt
 from vega_datasets import data
-# conda install -c conda-forge altair_saver
-from altair_saver import save
 
 class Graphs:
     def __init__(self, *args):
@@ -37,7 +35,7 @@ class Graphs:
             color='Origin',
         ).interactive()
 
-        save(chart, 'graphs/chart.html')
+        chart.save('graphs/chart.html')
 
     def _graph_xyz(self):
         pass
