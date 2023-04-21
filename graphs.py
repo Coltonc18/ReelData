@@ -1,26 +1,46 @@
+# To import Vega-Altair into anaconda, run the command below in the conda command line:
+# conda install -c conda-forge altair vega_datasets
+import altair as alt
+from vega_datasets import data
+# conda install -c conda-forge altair_saver
+from altair_saver import save
+
 class Graphs:
     def __init__(self, *args):
-        self.functions = {
-            'graph_xyz': self.graph_xyz,
-            'graph_abc': self.graph_abc
+        self._functions = {
+            'graph_xyz': self._graph_xyz,
+            'graph_abc': self._graph_abc,
+            'example': self._example_graph
         }
         self.create_graphs(*args)
 
     def create_graphs(self, *args):
         for arg in args:
             try:
-                self.functions[arg]()
+                self._functions[arg]()
             except KeyError:
                 print(f'Function {arg} does not exist')
 
         # alternatively
         if 'xyz' in args:
-            self.graph_xyz()
+            self._graph_xyz()
         elif 'abc' in args:
-            self.graph_abc()
+            self._graph_abc()
 
-    def graph_xyz(self):
+    def _example_graph(self):
+        cars = data.cars()
+
+        # make the chart
+        chart = alt.Chart(cars).mark_point().encode( # type: ignore
+            x='Horsepower',
+            y='Miles_per_Gallon',
+            color='Origin',
+        ).interactive()
+
+        save(chart, 'graphs/chart.html')
+
+    def _graph_xyz(self):
         pass
 
-    def graph_abc(self):
+    def _graph_abc(self):
         pass

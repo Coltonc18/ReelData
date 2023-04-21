@@ -4,9 +4,13 @@ import time
 import numpy as np
 import pandas as pd
 
+from graphs import Graphs
+
 
 def main():
     # merge_data()
+    graph = Graphs()
+    graph.create_graphs('example')
     pass
 
 def merge_data():
