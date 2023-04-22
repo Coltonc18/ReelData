@@ -13,7 +13,7 @@ def main():
     graph.create_graphs('example')
     pass
 
-def merge_data():
+def merge_data(verbose=False):
     credits_df = pd.read_csv('data/credits.csv.gz', usecols=['id', 'cast'], low_memory=False)
     links_df = pd.read_csv('data/links.csv.gz', usecols=['movieId', 'imdbId'], low_memory=False)
 
@@ -23,7 +23,7 @@ def merge_data():
         rating_avg_df.to_csv('data/rating_averages.csv', index=False)
     else:
         rating_avg_df = pd.read_csv('data/rating_averages.csv')
-    print(f'Ratings average df has data for {len(rating_avg_df)} movies')
+    print(f'Ratings average df has data for {len(rating_avg_df)} movies') if verbose else None
 
     metadata_df = pd.read_csv('data/movies_metadata.csv.gz', low_memory=False)
     metadata_df['id'] = metadata_df['id'].astype('int32')
@@ -31,15 +31,14 @@ def merge_data():
                       'spoken_languages', 'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
 
     master_df = pd.merge(credits_df, metadata_df, on='id')
-    # print(f'After FIRST  merge, length is {len(master_df)}')
+    print(f'After FIRST  merge, length is {len(master_df)}') if verbose else None
     master_df = pd.merge(master_df, rating_avg_df, left_on='id', right_on='movieId', how='left')
-    # print(f'After SECOND merge, length is {len(master_df)}')
+    print(f'After SECOND merge, length is {len(master_df)}') if verbose else None
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
-    # print(f'After THIRD  merge, length is {len(master_df)}, columns are: {master_df.columns}')
+    print(f'After THIRD  merge, length is {len(master_df)}, columns are: {master_df.columns}') if verbose else None
     
     # Save merged dataframe to CSV
     master_df.to_csv("data/master_dataset.csv", index=False)
-
 
 # Method to test the time difference between opening a csv file vs a gzipped csv file
 def test_times():
@@ -48,7 +47,7 @@ def test_times():
         credits = pd.read_csv(f'data/{file}.csv.gz', compression='gzip')
         t2 = time.time()
         tot1 = t2-t1
-        # print(f'Took {tot1} seconds to open the GZIP File')
+        print(f'Took {tot1} seconds to open the GZIP File')
 
         credits.to_csv(f'data/{file}.csv', index=False)
 
@@ -56,7 +55,7 @@ def test_times():
         credits2 = pd.read_csv(f'data/{file}.csv')
         t4 = time.time()
         tot2 = t4-t3
-        # print(f'Took {tot2} seconds to open the CSV File')
+        print(f'Took {tot2} seconds to open the CSV File')
 
         print(f'Opening a CSV is {tot1-tot2} seconds faster than a GZIP')
 
