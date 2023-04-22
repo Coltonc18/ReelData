@@ -1,8 +1,5 @@
 # To import Vega-Altair into anaconda, run the commands below in the conda command line:
-# conda install -c conda-forge altair vega_datasets
-# pip install altair_viewer
-# conda install -c conda-forge altair_saver
-# pip install vega
+# conda install -c conda-forge altair vega_datasets altair_viewer vega
 import altair as alt
 from vega_datasets import data
 
