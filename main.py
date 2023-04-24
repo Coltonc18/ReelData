@@ -8,14 +8,15 @@ from graphs import Graphs
 
 
 def main():
-    # merge_data()
-    graph = Graphs()
-    graph.create_graphs('example')
+    merge_data(True)
+    # graph = Graphs()
+    # graph.create_graphs('example')
     pass
 
 def merge_data(verbose=False):
-    credits_df = pd.read_csv('data/credits.csv.gz', usecols=['id', 'cast'], low_memory=False)
-    links_df = pd.read_csv('data/links.csv.gz', usecols=['movieId', 'imdbId'], low_memory=False)
+    credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
+    links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
+    expert_df = pd.read_csv('data/expert_ratings.csv')
 
     if ~os.path.exists('data/rating_averages.csv'):
         rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'userId', 'rating'], compression='gzip', low_memory=False)
@@ -23,9 +24,10 @@ def merge_data(verbose=False):
         rating_avg_df.to_csv('data/rating_averages.csv', index=False)
     else:
         rating_avg_df = pd.read_csv('data/rating_averages.csv')
+    rating_avg_df = rating_avg_df.apply(lambda n: n * 20)
     print(f'Ratings average df has data for {len(rating_avg_df)} movies') if verbose else None
 
-    metadata_df = pd.read_csv('data/movies_metadata.csv.gz', low_memory=False)
+    metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
     metadata_df['id'] = metadata_df['id'].astype('int32')
     metadata_df.drop(['belongs_to_collection', 'homepage', 'overview', 'poster_path', 'status', 
                       'spoken_languages', 'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
@@ -33,9 +35,13 @@ def merge_data(verbose=False):
     master_df = pd.merge(credits_df, metadata_df, on='id')
     print(f'After FIRST  merge, length is {len(master_df)}') if verbose else None
     master_df = pd.merge(master_df, rating_avg_df, left_on='id', right_on='movieId', how='left')
-    print(f'After SECOND merge, length is {len(master_df)}') if verbose else None
+    master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
+    print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
-    print(f'After THIRD  merge, length is {len(master_df)}, columns are: {master_df.columns}') if verbose else None
+    print(f'After THIRD  merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None   
+    master_df = pd.merge(master_df, expert_df, left_on='original_title', right_on='title', how='left').drop(['title_x', 'title_y'], axis='columns')
+    master_df.rename(columns={'rating': 'expert_rating'}, inplace=True)
+    print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Save merged dataframe to CSV
     master_df.to_csv("data/master_dataset.csv", index=False)
@@ -44,7 +50,7 @@ def merge_data(verbose=False):
 def test_times():
     for file in ['credits', 'keywords', 'links', 'movies_metadata', 'ratings']:
         t1 = time.time()
-        credits = pd.read_csv(f'data/{file}.csv.gz', compression='gzip')
+        credits = pd.read_csv(f'data/gzips/{file}.csv.gz', compression='gzip')
         t2 = time.time()
         tot1 = t2-t1
         print(f'Took {tot1} seconds to open the GZIP File')
