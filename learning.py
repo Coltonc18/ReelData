@@ -11,14 +11,16 @@ sns.set()
 
 def regressive_model(label_column, error=0.2):
     master_df = pd.read_csv('data/master_dataset.csv')
-    master_df = master_df[['adult', 'genres', 'original_language', 'production_companies', 'production_countries', 'runtime', 'user_rating', 'revenue', 'expert_rating']]
+    master_df = master_df[['adult', 'genres', 'budget', 'original_language', 'production_companies', 'production_countries', 'runtime', 'user_rating', 'revenue', 'expert_rating']]
 
     if 'revenue' in label_column:
         filtered_df = master_df[master_df['revenue'] != 0.0]
     elif 'expert' in label_column:
         filtered_df = master_df[master_df['expert_rating'].notna()]
+        label_column = 'expert_rating'
     elif 'user' in label_column:
         filtered_df = master_df[master_df['user_rating'].notna()]
+        label_column = 'user_rating'
     else:
         return f'{label_column} is not a valid metric to train on'
     
@@ -26,7 +28,7 @@ def regressive_model(label_column, error=0.2):
     
     features = filtered_df.drop(['user_rating', 'expert_rating', 'revenue'], axis='columns')
     labels = filtered_df[label_column]
-    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.2)
+    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
 
     accuracies = []
     for depth in range(1, 100, 2):
@@ -47,7 +49,7 @@ def regressive_model(label_column, error=0.2):
         test_predictions = model.predict(features_test)
         close = 0
         for prediction, actual in zip(test_predictions, labels_test):
-            print(f'Prediction: {prediction}, Actual: {actual}')
+            # print(f'Prediction: {prediction}, Actual: {actual}')
             if abs(prediction / actual - 1) <= error:
                 close += 1
         test_acc = close/len(test_predictions)*100
@@ -57,15 +59,15 @@ def regressive_model(label_column, error=0.2):
                        'test accuracy': test_acc})
         
     accuracies = pd.DataFrame(accuracies)
-    plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/RegressorTrain_{label_column}')
-    plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/RegressorTest_{label_column}')
+    plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain')
+    plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest')
 
 def plot_accuracies(accuracies, column, name, filepath):
     sns.relplot(kind='line', x='max depth', y=column, data=accuracies)
     plt.title(f'{name} Accuracy as Max Depth Changes')
     plt.xlabel('Max Depth')
     plt.ylabel(f'{name} Accuracy')
-    plt.ylim(0, 100)
+    plt.ylim(-1, 101)
 
     plt.savefig(filepath)
     plt.show()  # Display the graph
@@ -75,4 +77,4 @@ def neural_network():
     pass
 
 if __name__ == '__main__':
-    regressive_model('user')
+    regressive_model('revenue', error=0.1)
