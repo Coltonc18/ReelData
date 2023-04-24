@@ -8,8 +8,8 @@ from graphs import Graphs
 
 
 def main():
-    df = pd.read_csv('data/master_dataset.csv')
-    print(df.loc[:, 'expert_rating'].dropna())
+    df = pd.read_csv('data/movies_metadata.csv')
+    print(df[['title', 'original_title']].dropna())
     # merge_data()
     # graph = Graphs()
     # graph.create_graphs('example')
@@ -49,7 +49,7 @@ def merge_data(verbose=False):
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Save merged dataframe to CSV
-    master_df = master_df.loc[:, ['id', 'imdb_id', 'original_title', 'release_date', 'adult', 'budget', 'runtime', 'revenue', 'user_rating', 'expert_rating', 'vote_average', 'vote_count', 'original_language', 'popularity', 'production_companies', 'production_countries', 'cast', ]]
+    master_df = master_df.loc[:, ['id', 'imdb_id', 'original_title', 'release_date', 'adult', 'budget', 'runtime', 'revenue', 'user_rating', 'expert_rating', 'vote_average', 'vote_count', 'genre', 'original_language', 'popularity', 'production_companies', 'production_countries', 'cast', ]]
     master_df.to_csv("data/master_dataset.csv", index=False)
 
 # Method to test the time difference between opening a csv file vs a gzipped csv file
