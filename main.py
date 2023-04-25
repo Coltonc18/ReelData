@@ -8,7 +8,9 @@ from graphs import Graphs
 
 
 def main():
-    merge_data(True)
+    df = pd.read_csv('data/movies_metadata.csv')
+    print(df[['title', 'original_title']].dropna())
+    # merge_data()
     # graph = Graphs()
     # graph.create_graphs('example')
     pass
@@ -34,16 +36,20 @@ def merge_data(verbose=False):
 
     master_df = pd.merge(credits_df, metadata_df, on='id')
     print(f'After FIRST  merge, length is {len(master_df)}') if verbose else None
+    
     master_df = pd.merge(master_df, rating_avg_df, left_on='id', right_on='movieId', how='left')
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
     print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
+
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
-    print(f'After THIRD  merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None   
+    print(f'After THIRD  merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
+
     master_df = pd.merge(master_df, expert_df, left_on='original_title', right_on='title', how='left').drop(['title_x', 'title_y'], axis='columns')
     master_df.rename(columns={'rating': 'expert_rating'}, inplace=True)
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Save merged dataframe to CSV
+    master_df = master_df.loc[:, ['id', 'imdb_id', 'original_title', 'release_date', 'adult', 'budget', 'runtime', 'revenue', 'user_rating', 'expert_rating', 'vote_average', 'vote_count', 'genre', 'original_language', 'popularity', 'production_companies', 'production_countries', 'cast', ]]
     master_df.to_csv("data/master_dataset.csv", index=False)
 
 # Method to test the time difference between opening a csv file vs a gzipped csv file

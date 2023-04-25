@@ -19,7 +19,7 @@ DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
-    web_scraping_tomatoes(verbose=False)
+    web_scraping_tomatoes(verbose=True)
     pass
 
 '''
@@ -54,12 +54,12 @@ def web_scraping_tomatoes(clear=True, verbose=True):
     print('Setting up csv files...') if verbose else None
     if clear:
         with open('data/tomatoes_ratings.csv', 'w') as f:
-            f.write('title,rating\n')
+            f.write('id,title,scraped_title,rating\n')
         print('Cleared CSV') if verbose else None
     
     # Import the titles from movies_metadata and replace spaces with underscores
-    titles = pd.read_csv('data/movies_metadata.csv', usecols=['original_title'])['original_title']
-    titles = titles.apply(lambda a: str(a).lower().replace(' ', '_')).tolist()
+    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title'])[:10]
+    titles['scraped_title'] = titles['title'].apply(lambda a: str(a).lower().replace(' ', '_'))
 
     # Initializes a thread to constantly scan csv_queue for lines to add to the csv
     print('Starting writer thread...') if verbose else None
@@ -84,7 +84,7 @@ def _download_data_tomatoes(titles, verbose=True):
 
     # Initialize the ThreadPool to concurrently scrape many pages at once
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-        executor.map(_access_page_tomatoes, titles)
+        executor.map(_access_page_tomatoes, titles.iterrows())
 
     # Close the csv_writer thread when all pages have been scraped
     csv_queue.put("done")
@@ -95,9 +95,11 @@ https://rottentomatoes.com/m/title (if it exists) for the critic rating of that 
 
 Does an empty return if the page is not accessible and prints out the page's error message (if verbose is True).
 '''
-def _access_page_tomatoes(title, verbose=True):
+def _access_page_tomatoes(movie, verbose=True):
+    movie = movie[1].to_dict()
+
     # Remove any special characters that have been omitted from the url
-    title = re.sub(r"['\".:,-]", '', title)
+    title = re.sub(r"['\".:,-]", '', movie['scraped_title'])
     # Remove "the" and "a" if they are the first words of the title
     title = title[4:] if title[:3] == 'the' else title
     title = title[2:] if title[:1] == 'a' else title
@@ -124,7 +126,7 @@ def _access_page_tomatoes(title, verbose=True):
     data = json.loads(soup.select('script#score-details-json[type="application/json"]')[0].text)
 
     # Place the movie title, from the parsed json, into the CSV Writer Queue to be appended to the csv file
-    csv_queue.put(f'{title},{data["scoreboard"]["tomatometerScore"]["value"]}\n')
+    csv_queue.put(f'{movie["id"]},{movie["title"]},{title},{data["scoreboard"]["tomatometerScore"]["value"]}\n')
 
 
 '''
