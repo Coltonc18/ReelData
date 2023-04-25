@@ -10,7 +10,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-MAX_THREADS = 1
+MAX_THREADS = 1000
 csv_queue = Queue()
 
 '''
@@ -58,7 +58,7 @@ def web_scraping_tomatoes(clear=True, verbose=True):
         print('Cleared CSV') if verbose else None
     
     # Import the titles from movies_metadata and replace spaces with underscores
-    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title'])[:10]
+    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title']).loc[:100]
     titles['scraped_title'] = titles['title'].apply(lambda a: str(a).lower().replace(' ', '_'))
 
     # Initializes a thread to constantly scan csv_queue for lines to add to the csv
@@ -79,6 +79,13 @@ Creates a thread pool using the ThreadPoolExecutor and maps each thread to run _
 with each title in the list provided as the parameters to iterate through.
 '''
 def _download_data_tomatoes(titles, verbose=True):
+
+    # for movie in titles.iterrows():
+    #     _access_page_tomatoes(movie)
+    # print('done!')
+    # csv_queue.put('done')
+    # return
+
     # We don't want to start 1000 threads if we are only scraping 5 titles
     threads = min(MAX_THREADS, len(titles))
 
@@ -97,12 +104,15 @@ Does an empty return if the page is not accessible and prints out the page's err
 '''
 def _access_page_tomatoes(movie, verbose=True):
     movie = movie[1].to_dict()
-
-    # Remove any special characters that have been omitted from the url
-    title = re.sub(r"['\".:,-]", '', movie['scraped_title'])
+    title = movie['scraped_title']
+    
     # Remove "the" and "a" if they are the first words of the title
     title = title[4:] if title[:3] == 'the' else title
     title = title[2:] if title[:1] == 'a' else title
+    # Remove any special characters that have been omitted from the url
+    title = re.sub(r"['\".:,-]", '', title)
+    title = re.sub(r"__", '_', title)
+    
 
     # Append the title to the base url
     # NOTE: Movies that have duplicate titles on rottentomatoes.com will not fit this url model
@@ -112,11 +122,18 @@ def _access_page_tomatoes(movie, verbose=True):
 
     # Send a request to the page
     page = requests.get(url=url)
+
+    # Maybe?
+    # session_id='134-2074330-3006658'
+    # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
+    #            'set-cookie': f'session-id={session_id}; Domain=.imdb.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
+    
     # If we get an error code, print information and return
     if page.status_code != 200:
-        if verbose:
-            print(f'404: Page not Found ({title})') if page.status_code == 404 else 'Error (not 404)'
+        print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
         return
+    else:
+        print(f'Found page {url}')
 
     # Parse the html from the page using the BeautifulSoup library
     soup = BeautifulSoup(page.content, 'html.parser')
