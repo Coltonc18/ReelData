@@ -19,8 +19,23 @@ DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
-    web_scraping_tomatoes(verbose=True)
+    # web_scraping_tomatoes(verbose=True)
+
+    df = pd.read_csv('data/tomatoes/rotten_tomatoes_critic_reviews.csv')
+    # print(df.loc[:10, 'review_score'].dropna().apply(convert_letter_ratings))
+    df = df[df['review_score'].dropna().apply(convert_letter_ratings)]
+    print(df.head())
+    # grouped = df.groupby('rotten_tomatoes_link')['review_score'].mean()
     pass
+
+def convert_letter_ratings(value):
+    if '/' in value:
+        return (float(value[:value.find('/')]) / float(value[value.find('/') + 1:])) * 100
+    
+    letter_values = {'A': 100, 'A-': 93, 'B+': 88, 'B': 84, 'B-': 80, 'C+': 78, 'C': 74, 'C-': 70, 'D+': 68, 'D': 64, 'D-': 60, 'F': 50}
+    if value in letter_values.keys():
+        return letter_values[value]
+    
 
 '''
 Using a thread, empties the objects in csv_queue into the designated filepath
