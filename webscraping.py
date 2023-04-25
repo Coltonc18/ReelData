@@ -58,7 +58,7 @@ def web_scraping_tomatoes(clear=True, verbose=True):
         print('Cleared CSV') if verbose else None
     
     # Import the titles from movies_metadata and replace spaces with underscores
-    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title']).loc[:100]
+    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title']).loc[:1000]
     titles['scraped_title'] = titles['title'].apply(lambda a: str(a).lower().replace(' ', '_'))
 
     # Initializes a thread to constantly scan csv_queue for lines to add to the csv
@@ -120,20 +120,19 @@ def _access_page_tomatoes(movie, verbose=True):
     #       cannot be scraped (for now) because we do not know how to get that tag
     url = 'https://rottentomatoes.com/m/' + title
 
+    # Maybe?
+    session_id='134-2074330-3006658'
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
+               'set-cookie': 'Domain=rottentomatoes.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
+
     # Send a request to the page
     page = requests.get(url=url)
 
-    # Maybe?
-    # session_id='134-2074330-3006658'
-    # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
-    #            'set-cookie': f'session-id={session_id}; Domain=.imdb.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
-    
     # If we get an error code, print information and return
+    print(f'Code {page.status_code} for {movie["title"]}')
     if page.status_code != 200:
-        print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
+        # print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
         return
-    else:
-        print(f'Found page {url}')
 
     # Parse the html from the page using the BeautifulSoup library
     soup = BeautifulSoup(page.content, 'html.parser')
