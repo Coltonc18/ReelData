@@ -159,7 +159,6 @@ def _access_page_tomatoes(movie, verbose=True):
     page = requests.get(url=url)
 
     # If we get an error code, print information and return
-    print(f'Code {page.status_code} for {movie["title"]}')
     if page.status_code != 200:
         # print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
         return
