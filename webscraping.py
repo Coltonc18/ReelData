@@ -129,6 +129,7 @@ def _access_page_tomatoes(movie, verbose=True):
     #            'set-cookie': f'session-id={session_id}; Domain=.imdb.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
     
     # If we get an error code, print information and return
+    print(page.status_code)
     if page.status_code != 200:
         print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
         return
