@@ -4,38 +4,53 @@ import os
 import re
 import time
 from queue import Queue
-from threading import Thread
 
 import pandas as pd
+import numpy as np
+
 import requests
 from bs4 import BeautifulSoup
+from threading import Thread
 
 MAX_THREADS = 1000
 csv_queue = Queue()
 
 '''
-Main is for testing purposes only
+main is for testing purposes only
 DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
     # web_scraping_tomatoes(verbose=True)
 
-    df = pd.read_csv('data/tomatoes/rotten_tomatoes_critic_reviews.csv')
-    # print(df.loc[:10, 'review_score'].dropna().apply(convert_letter_ratings))
-    df = df[df['review_score'].dropna().apply(convert_letter_ratings)]
-    print(df.head())
-    # grouped = df.groupby('rotten_tomatoes_link')['review_score'].mean()
+    df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
+    df['review_score'] = df.apply(_convert_ratings, axis='columns')
+    grouped = df.groupby('rotten_tomatoes_link')['review_score'].mean()
+    print(grouped)
+    
     pass
 
-def convert_letter_ratings(value):
-    if '/' in value:
-        return (float(value[:value.find('/')]) / float(value[value.find('/') + 1:])) * 100
+def _convert_ratings(row):
+    value = row['review_score']
+
+    if isinstance(value, str):
+        value = value.replace(' ', '')
+
+    if '/' in str(value):
+        fraction = value.split('/')
+        try:
+            return (float(fraction[0]) / float(fraction[1])) * 100
+        except ZeroDivisionError:
+            return 80 if row['review_type'] == 'Fresh' else 40
     
     letter_values = {'A': 100, 'A-': 93, 'B+': 88, 'B': 84, 'B-': 80, 'C+': 78, 'C': 74, 'C-': 70, 'D+': 68, 'D': 64, 'D-': 60, 'F': 50}
     if value in letter_values.keys():
         return letter_values[value]
     
+    if isinstance(value, float) and np.isnan(value):
+        return 80 if row['review_type'] == 'Fresh' else 40
+    
+    return float(value)
 
 '''
 Using a thread, empties the objects in csv_queue into the designated filepath
