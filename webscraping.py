@@ -19,8 +19,23 @@ DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
-    web_scraping_tomatoes(verbose=True)
+    # web_scraping_tomatoes(verbose=True)
+
+    df = pd.read_csv('data/tomatoes/rotten_tomatoes_critic_reviews.csv')
+    # print(df.loc[:10, 'review_score'].dropna().apply(convert_letter_ratings))
+    df = df[df['review_score'].dropna().apply(convert_letter_ratings)]
+    print(df.head())
+    # grouped = df.groupby('rotten_tomatoes_link')['review_score'].mean()
     pass
+
+def convert_letter_ratings(value):
+    if '/' in value:
+        return (float(value[:value.find('/')]) / float(value[value.find('/') + 1:])) * 100
+    
+    letter_values = {'A': 100, 'A-': 93, 'B+': 88, 'B': 84, 'B-': 80, 'C+': 78, 'C': 74, 'C-': 70, 'D+': 68, 'D': 64, 'D-': 60, 'F': 50}
+    if value in letter_values.keys():
+        return letter_values[value]
+    
 
 '''
 Using a thread, empties the objects in csv_queue into the designated filepath
@@ -58,7 +73,7 @@ def web_scraping_tomatoes(clear=True, verbose=True):
         print('Cleared CSV') if verbose else None
     
     # Import the titles from movies_metadata and replace spaces with underscores
-    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title']).loc[:100]
+    titles = pd.read_csv('data/movies_metadata.csv', usecols=['id', 'title']).loc[:1000]
     titles['scraped_title'] = titles['title'].apply(lambda a: str(a).lower().replace(' ', '_'))
 
     # Initializes a thread to constantly scan csv_queue for lines to add to the csv
@@ -120,21 +135,18 @@ def _access_page_tomatoes(movie, verbose=True):
     #       cannot be scraped (for now) because we do not know how to get that tag
     url = 'https://rottentomatoes.com/m/' + title
 
+    # Maybe?
+    session_id='134-2074330-3006658'
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
+               'set-cookie': 'Domain=rottentomatoes.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
+
     # Send a request to the page
     page = requests.get(url=url)
 
-    # Maybe?
-    # session_id='134-2074330-3006658'
-    # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
-    #            'set-cookie': f'session-id={session_id}; Domain=.imdb.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
-    
     # If we get an error code, print information and return
-    print(page.status_code)
     if page.status_code != 200:
-        print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
+        # print(f'404: Page not Found ({title})') if page.status_code == 404 else f'Error {page.status_code}'
         return
-    else:
-        print(f'Found page {url}')
 
     # Parse the html from the page using the BeautifulSoup library
     soup = BeautifulSoup(page.content, 'html.parser')
