@@ -16,6 +16,9 @@ def main():
     pass
 
 def merge_data(verbose=False):
+    # Will have to merge critic_reviews into tomatoes_movies on rotten_tomatoes_link, then into master on title
+    
+    # Nathan please comment this so it looks a bit more readable instead of just dense code
     credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
     expert_df = pd.read_csv('data/expert_ratings.csv')
