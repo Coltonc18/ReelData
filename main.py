@@ -71,8 +71,9 @@ def merge_data(verbose=False):
                                   'production_countries', 'directors', 'authors', 'actors', 'cast', 
                                   'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
                                   'audience_status', 'audience_rating', 'audience_count', 
-                                  'tomatometer_top_critics_count', 'tomatometer_fresh_critics_count', 
-                                  'tomatometer_rotten_critics_count']]
+                                  'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count']]
+
+    master_df.rename({'review_score': 'calc_RT_rating', 'review_type': 'RT_expert_class', 'tomatometer_rating': 'RT_expert_rating'}, axis='columns', inplace=True)
     
     # Save the dataframe to a file
     master_df.to_csv("data/master_dataset.csv", index=False)

@@ -1,40 +1,43 @@
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-
-import pandas as pd
-
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeRegressor
+
 sns.set()
 
 def regressive_model(label_column, error=0.2):
     master_df = pd.read_csv('data/master_dataset.csv')
-    master_df.drop(['cast', 'id', 'imdb_id', 'popularity', 'production_companies', 'review_type',
-                    'production_countries', 'title', 'vote_count', 'user_rating', 
+    # TODO: Find a way to make "dummies" columns for each actor and actor and director instead of all together
+    master_df.drop(['cast', 'id', 'imdb_id', 'popularity', 'production_companies', 'directors',
+                    'production_countries', 'title', 'vote_count', 'user_rating', 'actors', 'authors',
                     'rotten_tomatoes_link', 'streaming_release_date', 'tomatometer_fresh_critics_count', 
-                    'tomatometer_rotten_critics_count'], axis='columns', inplace=True)
+                    'tomatometer_rotten_critics_count', 'audience_status', 'tomatometer_status'], 
+                    axis='columns', inplace=True)
 
     if 'revenue' in label_column:
         filtered_df = master_df[master_df['revenue'] != 0.0]
     elif 'expert' in label_column:
-        filtered_df = master_df[master_df['review_score'].notna()]
-        label_column = 'review_score'
-    elif 'user' in label_column:
-        filtered_df = master_df[master_df['vote_average'].notna()]
-        label_column = 'vote_average'
+        filtered_df = master_df[master_df['RT_expert_rating'].notna()]
+        filtered_df = master_df[master_df['RT_expert_rating'] != 0.0]
+        label_column = 'RT_expert_rating'
+    elif 'audience' in label_column:
+        filtered_df = master_df[master_df['audience_rating'].notna()]
+        filtered_df = master_df[master_df['audience_rating'] != 0.0]
+        label_column = 'audience_rating'
     else:
-        return f'{label_column} is not a valid metric to train on, please pick revenue, expert, or user'
+        return f'{label_column} is not a valid metric to train on, please pick revenue, expert, or audience'
     
     filtered_df = pd.get_dummies(filtered_df).dropna()
     
-    features = filtered_df.drop(['vote_average', 'review_score', 'revenue'], axis='columns')
+    features = filtered_df.drop(['audience_rating', 'RT_expert_rating', 'revenue'], axis='columns')
     labels = filtered_df[label_column]
     features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
 
     accuracies = []
-    for depth in range(1, 100, 2):
+    for depth in range(1, 60, 2):
 
         model = DecisionTreeRegressor(max_depth=depth)
         model.fit(features_train, labels_train)
@@ -45,7 +48,7 @@ def regressive_model(label_column, error=0.2):
         for prediction, actual in zip(train_predictions, labels_train):
             if abs(prediction / actual - 1) <= error:
                 close += 1
-        train_acc = close/len(train_predictions)*100
+        train_acc = close/len(train_predictions) * 100
         # print('Train Accuracy:', train_acc, '%')
 
         # Compute test accuracy
@@ -53,9 +56,9 @@ def regressive_model(label_column, error=0.2):
         close = 0
         for prediction, actual in zip(test_predictions, labels_test):
             # print(f'Prediction: {prediction}, Actual: {actual}')
-            if abs(prediction / actual - 1) <= error:
+            if abs(float(prediction) / actual - 1) <= error:
                 close += 1
-        test_acc = close/len(test_predictions)*100
+        test_acc = close/len(test_predictions) * 100
         # print('Test  Accuracy:', test_acc, '%')
 
         accuracies.append({'max depth': depth, 'train accuracy': train_acc, 
@@ -80,4 +83,4 @@ def neural_network():
     pass
 
 if __name__ == '__main__':
-    regressive_model('user', error=0.1)
+    regressive_model('revenue', error=0.1)
