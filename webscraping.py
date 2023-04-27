@@ -23,34 +23,7 @@ def main():
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
     # web_scraping_tomatoes(verbose=True)
 
-    df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
-    df['review_score'] = df.apply(_convert_ratings, axis='columns')
-    grouped = df.groupby('rotten_tomatoes_link')['review_score'].mean()
-    print(grouped)
-    
     pass
-
-def _convert_ratings(row):
-    value = row['review_score']
-
-    if isinstance(value, str):
-        value = value.replace(' ', '')
-
-    if '/' in str(value):
-        fraction = value.split('/')
-        try:
-            return (float(fraction[0]) / float(fraction[1])) * 100
-        except ZeroDivisionError:
-            return 80 if row['review_type'] == 'Fresh' else 40
-    
-    letter_values = {'A': 100, 'A-': 93, 'B+': 88, 'B': 84, 'B-': 80, 'C+': 78, 'C': 74, 'C-': 70, 'D+': 68, 'D': 64, 'D-': 60, 'F': 50}
-    if value in letter_values.keys():
-        return letter_values[value]
-    
-    if isinstance(value, float) and np.isnan(value):
-        return 80 if row['review_type'] == 'Fresh' else 40
-    
-    return float(value)
 
 '''
 Using a thread, empties the objects in csv_queue into the designated filepath
