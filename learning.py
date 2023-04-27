@@ -11,22 +11,25 @@ sns.set()
 
 def regressive_model(label_column, error=0.2):
     master_df = pd.read_csv('data/master_dataset.csv')
-    master_df = master_df[['adult', 'genres', 'budget', 'original_language', 'production_companies', 'production_countries', 'runtime', 'user_rating', 'revenue', 'expert_rating']]
+    master_df.drop(['cast', 'id', 'imdb_id', 'popularity', 'production_companies', 'review_type',
+                    'production_countries', 'title', 'vote_count', 'user_rating', 
+                    'rotten_tomatoes_link', 'streaming_release_date', 'tomatometer_fresh_critics_count', 
+                    'tomatometer_rotten_critics_count'], axis='columns', inplace=True)
 
     if 'revenue' in label_column:
         filtered_df = master_df[master_df['revenue'] != 0.0]
     elif 'expert' in label_column:
-        filtered_df = master_df[master_df['expert_rating'].notna()]
-        label_column = 'expert_rating'
+        filtered_df = master_df[master_df['review_score'].notna()]
+        label_column = 'review_score'
     elif 'user' in label_column:
-        filtered_df = master_df[master_df['user_rating'].notna()]
-        label_column = 'user_rating'
+        filtered_df = master_df[master_df['vote_average'].notna()]
+        label_column = 'vote_average'
     else:
-        return f'{label_column} is not a valid metric to train on'
+        return f'{label_column} is not a valid metric to train on, please pick revenue, expert, or user'
     
     filtered_df = pd.get_dummies(filtered_df).dropna()
     
-    features = filtered_df.drop(['user_rating', 'expert_rating', 'revenue'], axis='columns')
+    features = filtered_df.drop(['vote_average', 'review_score', 'revenue'], axis='columns')
     labels = filtered_df[label_column]
     features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
 
@@ -77,4 +80,4 @@ def neural_network():
     pass
 
 if __name__ == '__main__':
-    regressive_model('revenue', error=0.1)
+    regressive_model('user', error=0.1)
