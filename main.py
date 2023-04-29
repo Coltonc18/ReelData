@@ -37,54 +37,92 @@ def main():
 def merge_data(verbose=False):
     # Will have to merge critic_reviews into tomatoes_movies on rotten_tomatoes_link, then into master on title
     
-    # TODO: #1 Nathan please comment this so it looks a bit more readable instead of just dense code
+    # Read the 'credits.csv' file and select only the 'id' and 'cast' columns
+    # Set low_memory=False to avoid warning about mixed dtypes in the 'cast' column
     credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
+
+    # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
     # Think we are done using this:
     # expert_df = pd.read_csv('data/expert_ratings.csv')
 
+    # Check if the 'rating_averages.csv' file exists
+    # If it doesn't exist, read the 'ratings.csv.gz' file and select only the 'movieId', 'userId', and 'rating' columns
+    # Compress the file with gzip to reduce its size and set low_memory=False to avoid warning about mixed dtypes in the 'rating' column
+    # Group the dataframe by 'movieId' and calculate the mean rating for each movie
+    # Multiply the mean rating by 20 to convert it to a 100-point scale
+    # Save the resulting dataframe to a new 'rating_averages.csv' file
+    # If the 'rating_averages.csv' file exists, read it instead
     if ~os.path.exists('data/rating_averages.csv'):
         rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'userId', 'rating'], compression='gzip', low_memory=False)
         rating_avg_df = rating_df.groupby('movieId')['rating'].mean()
         rating_avg_df.to_csv('data/rating_averages.csv', index=False)
     else:
         rating_avg_df = pd.read_csv('data/rating_averages.csv')
+    
+    # Multiply the mean rating by 20 to convert it to a 100-point scale
     rating_avg_df = rating_avg_df.apply(lambda n: n * 20)
     print(f'Ratings average df has data for {len(rating_avg_df)} movies') if verbose else None
 
+    # Load movie metadata from csv file
     metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
+
     # Remove rows that are not movies
     metadata_df = metadata_df[metadata_df['video'] == False]
     metadata_df = metadata_df[metadata_df['status'] == 'Released']
+
+    # Cast 'id' column to int32 data type
     metadata_df['id'] = metadata_df['id'].astype('int32')
+
+    # Remove unnecessary columns from metadata
     metadata_df.drop(['adult', 'belongs_to_collection', 'homepage', 'overview', 'poster_path', 'status', 
-                      'spoken_languages', 'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
+                    'spoken_languages', 'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
     
     # RT Critic Ratings
+    # review_score column created with the converted rating values
     critic_df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
     critic_df['review_score'] = critic_df.apply(_convert_ratings, axis='columns')
 
-    # RT Audience Ratings and Movie Data
+    # RT Audience Ratings and drop unused columns
     audience_df = pd.read_csv('data/rotten_tomatoes_movies.csv')
     audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime', 'genres'])
 
     # All RT Data
+    # Create a DataFrame containing the average review score for each movie
+    # by grouping the critic reviews DataFrame by the 'rotten_tomatoes_link' column and computing the mean
+    # Then reset the index so 'rotten_tomatoes_link' becomes a column again
     rotten_tomatoes_df = pd.DataFrame(data=critic_df.groupby('rotten_tomatoes_link')['review_score'].mean()).reset_index()
+
+    # Create a new column 'review_type' in the rotten_tomatoes_df DataFrame based on the 'review_score' column
+    # Use a lambda function to assign 'Fresh' if rating is greater than or equal to 60, otherwise 'Rotten'
     rotten_tomatoes_df['review_type'] = rotten_tomatoes_df['review_score'].apply(lambda rating: 'Fresh' if rating >= 60 else 'Rotten')
+
+    # Merge the audience DataFrame into the rotten_tomatoes_df DataFrame on the 'rotten_tomatoes_link' column
+    # This adds the audience ratings and other data (except for movie_info, critics_consensus, runtime, and genres) 
+    # to the DataFrame containing the average review score for each movie
     rotten_tomatoes_df = rotten_tomatoes_df.merge(audience_df, on='rotten_tomatoes_link')
 
+    # Merge credits and metadata dataframes on the 'id' column
     master_df = pd.merge(credits_df, metadata_df, on='id')
-    print(f'After FIRST  merge, length is {len(master_df)}') if verbose else None
-    
+    # If verbose is true, print the length of the merged dataframe
+    print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
+
+    # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, rating_avg_df, left_on='id', right_on='movieId', how='left')
+    # Rename the 'rating' column to 'user_rating'
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
+    # If verbose is true, print the length and columns of the merged dataframe
     print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
+    # Merge the new dataframe with the links dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
-    print(f'After THIRD  merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
+    # If verbose is true, print the length and columns of the merged dataframe
+    print(f'After THIRD merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
+    # Merge the new dataframe with the rotten_tomatoes_df dataframe on the 'title' and 'movie_title' columns
     master_df = pd.merge(master_df, rotten_tomatoes_df, left_on='title', right_on='movie_title', how='left')
+    # If verbose is true, print the length and columns of the merged dataframe
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Reorder the columns and filter out a few
@@ -96,7 +134,8 @@ def merge_data(verbose=False):
                                   'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
                                   'audience_status', 'audience_rating', 'audience_count', 
                                   'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count']]
-
+    
+    # Changed names of a few columns for better understanding
     master_df.rename({'review_score': 'calc_RT_rating', 'review_type': 'RT_expert_class', 'tomatometer_rating': 'RT_expert_rating'}, axis='columns', inplace=True)
     
     # Save the dataframe to a file
