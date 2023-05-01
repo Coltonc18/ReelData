@@ -10,7 +10,7 @@ from graphs import Graphs
 
 
 def main():
-    # merge_data()
+    merge_data()
 
     metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
     # Remove rows that are not movies
