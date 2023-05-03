@@ -117,7 +117,7 @@ def merge_data(verbose=False):
     # Reorder the columns and filter out a few
     master_df = master_df.loc[:, ['id', 'imdb_id', 'rotten_tomatoes_link', 'title', 'content_rating', 'budget', 
                                   'revenue', 'review_score', 'review_type', 'release_date', 'streaming_release_date', 
-                                  'runtime', 'user_rating', 'vote_average', 'vote_count', 'original_language', 
+                                  'runtime', 'user_rating', 'genres', 'vote_average', 'vote_count', 'original_language', 
                                   'production_companies', 'production_countries', 'directors', 'authors', 
                                   'cast', 'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
                                   'audience_status', 'audience_rating', 'audience_count', 
@@ -190,7 +190,9 @@ def json_to_columns(cell, key):
 
         # Iterate through each list index and convert the json format into a comma separated list
         for item in json_obj:
-            values += f'{item[key]}, '
+            # Don't add any duplicates: it will mess up the indexing of the ML dataset
+            if f'{item[key]}' not in values:
+                values += f'{item[key]}, '
 
         # Remove any left over quotes, and slice the string down by two indeces to deal with the extra comma at the end
         values = values[:-2].replace('"', '')
