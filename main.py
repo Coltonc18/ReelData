@@ -12,24 +12,6 @@ from graphs import Graphs
 def main():
     merge_data()
 
-    metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
-    # Remove rows that are not movies
-    metadata_df = metadata_df[metadata_df['video'] == False]
-    metadata_df = metadata_df[metadata_df['status'] == 'Released']
-    metadata_df['id'] = metadata_df['id'].astype('int32')
-    metadata_df.drop(['adult', 'belongs_to_collection', 'homepage', 'overview', 'poster_path', 'status', 
-                      'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
-    # for column in ['genres', 'production_companies', 'production_countries', 'spoken_languages']:
-    #     metadata_df[column] = metadata_df[column].apply(json_to_columns, args=('name',))
-    #     print(metadata_df[column])
-    
-    # Converts a stringified JSON into a comma separated list, which will be parsed later
-    metadata_df['production_companies'] = metadata_df['production_companies'].apply(json_to_columns, args=('name',))
-    print(metadata_df['production_companies'])
-
-    # df = pd.read_csv('data/master_dataset.csv')
-    # print(df.columns)
-
     # graph = Graphs()
     # graph.create_graphs('example')
     pass
@@ -40,6 +22,9 @@ def merge_data(verbose=False):
     # Read the 'credits.csv' file and select only the 'id' and 'cast' columns
     # Set low_memory=False to avoid warning about mixed dtypes in the 'cast' column
     credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
+
+    # Convert cast column to comma separated list
+    credits_df['cast'] = credits_df['cast'].apply(json_to_columns, args=('name',))
 
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
@@ -79,6 +64,10 @@ def merge_data(verbose=False):
     metadata_df.drop(['adult', 'belongs_to_collection', 'homepage', 'overview', 'poster_path', 'status', 
                     'spoken_languages', 'tagline', 'Unnamed: 0'], axis='columns', inplace=True)
     
+    # Convert production_companies, production_countries, and genres columns to comma separated lists
+    for column in ['production_companies', 'production_countries', 'genres']:
+        metadata_df[column] = metadata_df[column].apply(json_to_columns, args=('name',))
+    
     # RT Critic Ratings
     # review_score column created with the converted rating values
     critic_df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
@@ -105,7 +94,7 @@ def merge_data(verbose=False):
 
     # Merge credits and metadata dataframes on the 'id' column
     master_df = pd.merge(credits_df, metadata_df, on='id')
-    # If verbose is true, print the length of the merged dataframe
+    # If verbose is true, print the length of the merged dataframe: should stay constant throughout upcoming merges
     print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
@@ -126,12 +115,11 @@ def merge_data(verbose=False):
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Reorder the columns and filter out a few
-    master_df = master_df.loc[:, ['id', 'imdb_id', 'rotten_tomatoes_link', 'title', 'budget', 'revenue', 
-                                  'review_score', 'review_type', 'release_date', 'streaming_release_date', 
-                                  'runtime', 'user_rating', 'vote_average', 'vote_count', 
-                                  'original_language', 'popularity', 'production_companies', 
-                                  'production_countries', 'directors', 'authors', 'actors', 'cast', 
-                                  'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
+    master_df = master_df.loc[:, ['id', 'imdb_id', 'rotten_tomatoes_link', 'title', 'content_rating', 'budget', 
+                                  'revenue', 'review_score', 'review_type', 'release_date', 'streaming_release_date', 
+                                  'runtime', 'user_rating', 'vote_average', 'vote_count', 'original_language', 
+                                  'production_companies', 'production_countries', 'directors', 'authors', 
+                                  'cast', 'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
                                   'audience_status', 'audience_rating', 'audience_count', 
                                   'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count']]
     
@@ -190,6 +178,9 @@ def json_to_columns(cell, key):
         # Replace all single quotes with double quotes
         cell = cell.replace("'", '"')
 
+        # Replace occurrences of None because it messes up the JSON parsing
+        cell = cell.replace('None', '"None"')
+
         # Turn the apostophes back into single quotes
         cell = cell.replace("<apostrophe>", "'")
 
@@ -199,8 +190,10 @@ def json_to_columns(cell, key):
 
         # Iterate through each list index and convert the json format into a comma separated list
         for item in json_obj:
-            values += f'{item[key]}*'
-        values = values[:-1].replace('*', ', ')
+            values += f'{item[key]}, '
+
+        # Remove any left over quotes, and slice the string down by two indeces to deal with the extra comma at the end
+        values = values[:-2].replace('"', '')
 
         # Values are returned in the format "item1, item2, item3, ..."
         return values
