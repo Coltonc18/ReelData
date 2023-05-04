@@ -1,10 +1,11 @@
+import datetime
+import sys
+import time
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import numpy as np
-import time
-import sys
-import datetime
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
@@ -16,10 +17,10 @@ def create_learning_dataset():
     # Read in and filter the master dataset to the desired columns for Machine Learning
     df = pd.read_csv('data/master_dataset.csv').loc[:4500]
     df = df.loc[:, ['content_rating', 'budget', 'revenue', 'calc_RT_rating', 'RT_expert_class', 'release_date', 
-                                  'runtime', 'user_rating', 'genres', 'original_language', 'production_companies', 
-                                  'production_countries', 'directors', 'authors', 'cast', 'tomatometer_status', 'RT_expert_rating', 
-                                  'tomatometer_count', 'audience_status', 'audience_rating', 'audience_count', 'tomatometer_fresh_critics_count', 
-                                  'tomatometer_rotten_critics_count']]
+                    'runtime', 'user_rating', 'genres', 'original_language', 'production_companies', 
+                    'production_countries', 'directors', 'authors', 'cast', 'tomatometer_status', 'RT_expert_rating', 
+                    'tomatometer_count', 'audience_status', 'audience_rating', 'audience_count', 'tomatometer_fresh_critics_count', 
+                    'tomatometer_rotten_critics_count']]
     
 
     # Convert tomatometer_fresh/rotten_critics_count to percentages
@@ -60,12 +61,11 @@ def create_learning_dataset():
 
 def regressive_model(label_column, error=0.2):
     master_df = pd.read_csv('data/master_dataset.csv')
-    # TODO: Find a way to make "dummies" columns for each actor and actor and director instead of all together
-    master_df.drop(['cast', 'id', 'imdb_id', 'popularity', 'production_companies', 'directors',
-                    'production_countries', 'title', 'vote_count', 'user_rating', 'actors', 'authors',
-                    'rotten_tomatoes_link', 'streaming_release_date', 'tomatometer_fresh_critics_count', 
-                    'tomatometer_rotten_critics_count', 'audience_status', 'tomatometer_status'], 
-                    axis='columns', inplace=True)
+    master_df = master_df.loc[:, ['content_rating', 'budget', 'revenue', 'calc_RT_rating', 'RT_expert_class', 'release_date', 
+                    'runtime', 'user_rating', 'genres', 'original_language', 'production_companies', 
+                    'production_countries', 'directors', 'authors', 'cast', 'tomatometer_status', 'RT_expert_rating', 
+                    'tomatometer_count', 'audience_status', 'audience_rating', 'audience_count', 'tomatometer_fresh_critics_count', 
+                    'tomatometer_rotten_critics_count', 'a_list', 'top_100', 'top_1k']]
 
     if 'revenue' in label_column:
         filtered_df = master_df[master_df['revenue'] != 0.0]

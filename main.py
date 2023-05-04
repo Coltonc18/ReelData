@@ -1,8 +1,8 @@
-import os
-import time
 import json
-import re
+import os
 import pickle
+import re
+import time
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,7 @@ from webscraping import scrape_top_tier_actors
 
 
 def main():
+    # DELETE RATING_AVGERAGES.CSV AND RE-RUN MERGE DATA AND UNCOMMENT THE WEBSCRAPING PART WHEN NOT AT SCHOOL
     merge_data()
 
     # graph = Graphs()
@@ -19,8 +20,6 @@ def main():
     pass
 
 def merge_data(verbose=False):
-    # Will have to merge critic_reviews into tomatoes_movies on rotten_tomatoes_link, then into master on title
-    
     # Read the 'credits.csv' file and select only the 'id' and 'cast' columns
     # Set low_memory=False to avoid warning about mixed dtypes in the 'cast' column
     credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
@@ -28,6 +27,12 @@ def merge_data(verbose=False):
     # Convert cast column to comma separated list
     credits_df['cast'] = credits_df['cast'].apply(json_to_columns, args=('name',))
 
+    # Temporarily set the columns to zeros since school computers cannot scrape
+    credits_df['a_list'] = np.zeros(len(credits_df), dtype=np.int8)
+    credits_df['top_100'] = np.zeros(len(credits_df), dtype=np.int8)
+    credits_df['top_1k'] = np.zeros(len(credits_df), dtype=np.int8)
+
+    '''
     # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
     # A-List actors
@@ -56,30 +61,24 @@ def merge_data(verbose=False):
         top_1k_set = pickle.load(file)
     credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
                                                                              in actors.split(', ')) else 0)
-
+    '''
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
-    # Think we are done using this:
-    # expert_df = pd.read_csv('data/expert_ratings.csv')
-
     # Check if the 'rating_averages.csv' file exists
-    # If it doesn't exist, read the 'ratings.csv.gz' file and select only the 'movieId', 'userId', and 'rating' columns
-    # Compress the file with gzip to reduce its size and set low_memory=False to avoid warning about mixed dtypes in the 'rating' column
-    # Group the dataframe by 'movieId' and calculate the mean rating for each movie
-    # Multiply the mean rating by 20 to convert it to a 100-point scale
-    # Save the resulting dataframe to a new 'rating_averages.csv' file
-    # If the 'rating_averages.csv' file exists, read it instead
-    if ~os.path.exists('data/rating_averages.csv'):
-        rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'userId', 'rating'], compression='gzip', low_memory=False)
-        rating_avg_df = rating_df.groupby('movieId')['rating'].mean()
-        rating_avg_df.to_csv('data/rating_averages.csv', index=False)
+    if not os.path.exists('data/rating_averages.csv'):
+        # If it doesn't exist, read the 'ratings.csv.gz' file and select only the 'movieId' and 'rating' columns
+        rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'rating'], compression='gzip', low_memory=False)
+        # Calculate the average user rating of each movie as a Series
+        rating_avgs = rating_df.groupby('movieId')['rating'].mean()
+        # Multiply the mean rating by 20 to convert it to a 100-point scale and round to 3 decimal places
+        rating_avgs = rating_avgs.apply(lambda n: round(n * 20, 3))
+        print(f'Ratings average df has data for {len(rating_avgs)} movies') if verbose else None
+        # Save the resulting dataframe to a new 'rating_averages.csv' file
+        rating_avgs.to_csv('data/rating_averages.csv')
     else:
-        rating_avg_df = pd.read_csv('data/rating_averages.csv')
-    
-    # Multiply the mean rating by 20 to convert it to a 100-point scale
-    rating_avg_df = rating_avg_df.apply(lambda n: n * 20)
-    print(f'Ratings average df has data for {len(rating_avg_df)} movies') if verbose else None
+        # If the 'rating_averages.csv' file exists, read it instead
+        rating_avgs = pd.read_csv('data/rating_averages.csv') 
 
     # Load movie metadata from csv file
     metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
@@ -129,7 +128,7 @@ def merge_data(verbose=False):
     print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
-    master_df = pd.merge(master_df, rating_avg_df, left_on='id', right_on='movieId', how='left')
+    master_df = pd.merge(master_df, rating_avgs, left_on='id', right_on='movieId', how='left')
     # Rename the 'rating' column to 'user_rating'
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
     # If verbose is true, print the length and columns of the merged dataframe

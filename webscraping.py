@@ -1,17 +1,16 @@
 import concurrent.futures
 import json
 import os
+import pickle
 import re
 import time
-import pickle
 from queue import Queue
+from threading import Thread
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from threading import Thread
 
 MAX_THREADS = 1000
 csv_queue = Queue()
