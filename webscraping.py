@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import pickle
 from queue import Queue
 
 import pandas as pd
@@ -20,10 +21,73 @@ main is for testing purposes only
 DELETE BEFORE SUBMISSION AND CALL FROM main.py
 '''
 def main():
+    scrape_top_tier_actors(pages=['alist'], test=False)
+
     # DO NOT RUN UNLESS U WANT 2 HRS OF COMPUTER LOCKUP
     # web_scraping_tomatoes(verbose=True)
 
     pass
+
+'''
+Scrapes A-List, Top 100, and Top 1000 actor lists from imdb.com and saves them as sets to .pickle files.
+Sets stored in a pickle are used for their O(1) efficiency when determining if an item is in the set.
+
+Parameters:
+    pages (list) - Strings of pages which should be scraped. Options are alist, top_100, and top_1k
+    test  (bool) - Boolean value (default False) of whether the method should assure that all top 100 actors also 
+                   appear in top 1k set. For correct usage, pages should contain both 'top_100' and 'top_1k' when True
+'''
+def scrape_top_tier_actors(pages, test=False):
+    if 'alist' in pages:
+        # Get the BeautifulSoup object from the page with A-List actors
+        alist_url = 'https://www.imdb.com/list/ls044030121/'
+        page_alist = requests.get(alist_url)
+        soup_alist = BeautifulSoup(page_alist.content, 'html.parser')
+        alist_actors = set()
+        # Iterate through each list item on the page and get the actor's names
+        for child in range(1, 14):
+            alist_actors.add(soup_alist.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a'
+                                        )[0].get_text().strip())
+        # Save to a pickle file
+        with open('data/alist_actors.pickle', 'wb') as alist_pickle:
+            pickle.dump(alist_actors, alist_pickle)
+
+    actors_100 = set()
+    if 'top_100' in pages:
+        # Get the BeautifulSoup object from the page with the top 100 actors
+        top_100_url = 'https://www.imdb.com/list/ls050274118/'
+        page_100 = requests.get(top_100_url)
+        soup_100 = BeautifulSoup(page_100.content, 'html.parser')
+        # Iterate through each list item on the page and get the actor's names
+        for child in range(1, 101):
+            actors_100.add(soup_100.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a'
+                                        )[0].get_text().strip())
+        # Save to a pickle file
+        with open('data/top_100_actors.pickle', 'wb') as top100_pickle:
+            pickle.dump(actors_100, top100_pickle)
+
+    actors_1k = set()
+    if 'top_1k' in pages:
+        # Go to each of the ten pages which hold the top 1000 actors
+        for page in range(1, 11):
+            # Get the page and BeautifulSoup object
+            top_1k_url = f'https://www.imdb.com/list/ls058011111/?page={page}'
+            page_1k = requests.get(top_1k_url)
+            soup_1k = BeautifulSoup(page_1k.content, 'html.parser')
+            # Iterate through each list item on the page and get the actor's names
+            for child in range(1, 101):
+                actors_1k.add(soup_1k.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a'
+                                            )[0].get_text().strip())
+        # Save to a pickle file
+        with open('data/top_1k_actors.pickle', 'wb') as top1k_pickle:
+            pickle.dump(actors_1k, top1k_pickle)
+    
+    # Test to assure all actors in the 100 list also appear in the 1k list
+    if test:
+        for actor in actors_100:
+            if actor not in actors_1k:
+                print(f'{actor} is not in the top 1000, but is in the top 100')
+
 
 '''
 Using a thread, empties the objects in csv_queue into the designated filepath
@@ -122,11 +186,6 @@ def _access_page_tomatoes(movie, verbose=True):
     #       They have an identifying tag (7 digit number) as a prefix on the title, and therefore
     #       cannot be scraped (for now) because we do not know how to get that tag
     url = 'https://rottentomatoes.com/m/' + title
-
-    # Maybe?
-    session_id='134-2074330-3006658'
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.34', 
-               'set-cookie': 'Domain=rottentomatoes.com; Expires=Tue, 01 Jan 2036 08:00:01 GMT; Path=/'}
 
     # Send a request to the page
     page = requests.get(url=url)
