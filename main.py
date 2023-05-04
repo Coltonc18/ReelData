@@ -2,11 +2,13 @@ import os
 import time
 import json
 import re
+import pickle
 
 import numpy as np
 import pandas as pd
 
 from graphs import Graphs
+from webscraping import scrape_top_tier_actors
 
 
 def main():
@@ -25,6 +27,35 @@ def merge_data(verbose=False):
 
     # Convert cast column to comma separated list
     credits_df['cast'] = credits_df['cast'].apply(json_to_columns, args=('name',))
+
+    # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
+    # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
+    # A-List actors
+    if not os.path.exists('data/alist_actors.pickle'):
+        print('File Not Found: Scraping A-List actors') if verbose else None
+        scrape_top_tier_actors(pages=['alist'])
+    with open('data/alist_actors.pickle', 'rb') as file:
+        alist_set = pickle.load(file)
+    credits_df['a_list'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in alist_set for actor 
+                                                                             in actors.split(', ')) else 0)
+    
+    # Top-100 actors
+    if not os.path.exists('data/top_100_actors.pickle'):
+        print('File Not Found: Scraping Top 100 actors') if verbose else None
+        scrape_top_tier_actors(pages=['top_100'])
+    with open('data/top_100_actors.pickle', 'rb') as file:
+        top_100_set = pickle.load(file)
+    credits_df['top_100'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_100_set for actor 
+                                                                              in actors.split(', ')) else 0)
+
+    # Top-1000 actors
+    if not os.path.exists('data/top_1k_actors.pickle'):
+        print('File Not Found: Scraping Top 1000 actors') if verbose else None
+        scrape_top_tier_actors(pages=['top_1k'])
+    with open('data/top_1k_actors.pickle', 'rb') as file:
+        top_1k_set = pickle.load(file)
+    credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
+                                                                             in actors.split(', ')) else 0)
 
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
@@ -120,8 +151,8 @@ def merge_data(verbose=False):
                                   'runtime', 'user_rating', 'genres', 'vote_average', 'vote_count', 'original_language', 
                                   'production_companies', 'production_countries', 'directors', 'authors', 
                                   'cast', 'tomatometer_status', 'tomatometer_rating', 'tomatometer_count', 
-                                  'audience_status', 'audience_rating', 'audience_count', 
-                                  'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count']]
+                                  'audience_status', 'audience_rating', 'audience_count', 'tomatometer_fresh_critics_count', 
+                                  'tomatometer_rotten_critics_count', 'a_list', 'top_100', 'top_1k']]
     
     # Changed names of a few columns for better understanding
     master_df.rename({'review_score': 'calc_RT_rating', 'review_type': 'RT_expert_class', 'tomatometer_rating': 'RT_expert_rating'}, axis='columns', inplace=True)
