@@ -32,7 +32,7 @@ def merge_data(verbose=False):
     credits_df['top_100'] = np.zeros(len(credits_df), dtype=np.int8)
     credits_df['top_1k'] = np.zeros(len(credits_df), dtype=np.int8)
 
-    '''
+    
     # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
     # A-List actors
@@ -61,7 +61,7 @@ def merge_data(verbose=False):
         top_1k_set = pickle.load(file)
     credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
                                                                              in actors.split(', ')) else 0)
-    '''
+    
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
@@ -105,7 +105,7 @@ def merge_data(verbose=False):
 
     # RT Audience Ratings and drop unused columns
     audience_df = pd.read_csv('data/rotten_tomatoes_movies.csv')
-    audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime', 'genres'])
+    audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime'])
 
     # All RT Data
     # Create a DataFrame containing the average review score for each movie
