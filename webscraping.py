@@ -82,10 +82,12 @@ def scrape_top_tier_actors(pages, test=False):
             pickle.dump(actors_1k, top1k_pickle)
     
     # Test to assure all actors in the 100 list also appear in the 1k list
-    if test:
+    if test and ('top_100' in pages) and ('top_1k' in pages):
         for actor in actors_100:
             if actor not in actors_1k:
                 print(f'{actor} is not in the top 1000, but is in the top 100')
+    elif test and (('top_100' not in pages) or ('top_1k' not in pages)):
+        print('Could not check for page accuracy: top_100 and top_1k were not selected')
 
 
 '''
