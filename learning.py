@@ -14,11 +14,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 sns.set()
 
-def create_learning_dataset(remake=False):
-    if not remake:
-        if os.path.exists('data/learning_dataset.csv'):
-            return pd.read_csv('data/learning_dataset.csv')
-
+def create_learning_dataset():
     # Read in and filter the master dataset to the desired columns for Machine Learning
     df = pd.read_csv('data/master_dataset.csv')
     df = df.loc[:, ['content_rating', 'budget', 'revenue', 'calc_RT_rating', 'release_date', 
@@ -38,7 +34,7 @@ def create_learning_dataset(remake=False):
     # Convert each actor, author, etc into their own column with manual One-Hot-Encoding
     encoded_df = pd.DataFrame(index=range(len(df)))
     # 'authors', 'directors', 'genres', 'production_companies', 'production_countries'
-    for column in ['genres', 'directors', 'production_countries']:
+    for column in ['genres', 'production_countries']:
         # Convert NaN values to empty strings to avoid type errors
         df[column] = df[column].fillna('')
 
@@ -67,8 +63,11 @@ def create_learning_dataset(remake=False):
     return df
 
 
-def regressive_model(label_column, error=0.2):
-    learning_df = create_learning_dataset(remake=False)
+def regressive_model(label_column, error=0.2, remake_data=False):
+    if remake_data:
+        learning_df = create_learning_dataset()
+    else:
+        learning_df = pd.read_csv('data/learning.csv', low_memory=False)
 
     if 'revenue' in label_column:
         filtered_df = learning_df[learning_df['revenue'] != 0.0]
@@ -76,13 +75,13 @@ def regressive_model(label_column, error=0.2):
         filtered_df = learning_df[learning_df['RT_expert_rating'].notna()]
         filtered_df = learning_df[learning_df['RT_expert_rating'] != 0.0]
         label_column = 'RT_expert_rating'
-        filtered_df = filtered_df.drop(['calc_RT_rating', 'tomatometer_status_Fresh', 'tomatometer_status_Rotten', 
-                                        'tomatometer_status_Certified-Fresh', 'tomatometer_count'], axis='columns')
-    elif 'audience' in label_column:
+        filtered_df = filtered_df.drop(['calc_RT_rating', 'tomatometer_fresh_percentage', 
+                                        'tomatometer_rotten_percentage'], axis='columns')
+    elif ('audience' in label_column) or ('user' in label_column):
         filtered_df = learning_df[learning_df['audience_rating'].notna()]
         filtered_df = learning_df[learning_df['audience_rating'] != 0.0]
         label_column = 'audience_rating'
-        filtered_df = filtered_df.drop(['audience_status_Spilled', 'audience_status_Upright', 'audience_count', 'user_rating'], axis='columns')
+        filtered_df = filtered_df.drop(['user_rating'], axis='columns')
     else:
         return f'{label_column} is not a valid metric to train on, please pick revenue, expert, or audience'
     
@@ -93,7 +92,7 @@ def regressive_model(label_column, error=0.2):
     features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
 
     accuracies = []
-    for depth in range(8, 13, 1):
+    for depth in range(1, 20, 1):
 
         model = DecisionTreeRegressor(max_depth=depth)
         model.fit(features_train, labels_train)
@@ -102,8 +101,12 @@ def regressive_model(label_column, error=0.2):
         train_predictions = model.predict(features_train)
         close = 0
         for prediction, actual in zip(train_predictions, labels_train):
-            if abs(prediction / actual - 1) <= error:
-                close += 1
+            if label_column in ['audience_rating', 'RT_expert_rating']:
+                if abs(prediction - actual) <= error:
+                    close += 1
+            else:
+                if abs(prediction / actual - 1) * 100 <= error:
+                    close += 1
         train_acc = close/len(train_predictions) * 100
         # print('Train Accuracy:', train_acc, '%')
 
@@ -112,8 +115,12 @@ def regressive_model(label_column, error=0.2):
         close = 0
         for prediction, actual in zip(test_predictions, labels_test):
             # print(f'Prediction: {prediction}, Actual: {actual}')
-            if abs(float(prediction) / actual - 1) <= error:
-                close += 1
+            if label_column in ['audience_rating', 'RT_expert_rating']:
+                if abs(prediction - actual) <= error:
+                    close += 1
+            else:
+                if abs(prediction / actual - 1) * 100 <= error:
+                    close += 1
         test_acc = close/len(test_predictions) * 100
         # print('Test  Accuracy:', test_acc, '%')
 
@@ -121,8 +128,8 @@ def regressive_model(label_column, error=0.2):
                        'test accuracy': test_acc})
         
     accuracies = pd.DataFrame(accuracies)
-    plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain', save=False)
-    plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest', save=False)
+    plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain')
+    plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest')
 
 def plot_accuracies(accuracies, column, name, filepath, save=True):
     sns.relplot(kind='line', x='max depth', y=column, data=accuracies)
@@ -140,6 +147,5 @@ def neural_network():
     pass
 
 if __name__ == '__main__':
-    # print(create_learning_dataset().columns)
-    # for col in ['revenue', 'user', 'expert']:
-    regressive_model('expert', error=0.1)
+    for col in ['revenue', 'audience', 'expert']:
+        regressive_model(col, error=10)
