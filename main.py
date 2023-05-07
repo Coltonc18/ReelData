@@ -105,7 +105,7 @@ def merge_data(verbose=False):
 
     # RT Audience Ratings and drop unused columns
     audience_df = pd.read_csv('data/rotten_tomatoes_movies.csv')
-    audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime'])
+    audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime', 'genres'])
 
     # All RT Data
     # Create a DataFrame containing the average review score for each movie
