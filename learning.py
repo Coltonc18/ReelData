@@ -52,6 +52,7 @@ def create_learning_dataset():
     # Dates will be stored as an ordinal (time since the year zero)
     df['release_date'] = df['release_date'].apply(lambda date: datetime.date.toordinal(date))
 
+
     # Drop the columns that have already been manually encoded
     df = df.drop(['authors', 'directors', 'cast', 'genres', 'production_companies', 'production_countries'], axis='columns')
     # Complete the One-Hot-Encoding on the rest of the classification columns and concatenate the manually encoded ones
