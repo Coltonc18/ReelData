@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split,GridSearchCV
+from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 sns.set()
@@ -62,7 +62,6 @@ def create_learning_dataset():
     df.to_csv('data/learning.csv', index=False)
     # And return the modified dataframe
     return df
-
 
 def regressive_model(label_column, error=0.2, remake_data=False):
     if remake_data:
@@ -132,6 +131,55 @@ def regressive_model(label_column, error=0.2, remake_data=False):
     plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain')
     plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest')
 
+def neural_network():
+    df = pd.read_csv('data/learning.csv')
+    df = df[df['RT_expert_rating'].notna()]
+    df = df.drop(['calc_RT_rating', 'tomatometer_fresh_percentage', 
+                  'tomatometer_rotten_percentage'], axis='columns')
+    
+    for column in df.columns:
+        if 'production' in column:
+            df.drop(column, axis='columns', inplace=True)
+    
+
+    # Use the following line if classification is needed: rounds ratings to nearest 10
+    # df['RT_expert_rating'] = df['RT_expert_rating'].apply(lambda x: round(x/10)*10)
+
+    # Identify the target column
+    target_column = ['RT_expert_rating']
+    # Variables are all columns except the target_column
+    predictors = list(set(list(df.columns))-set(target_column))
+    # Scales all data down to be between 0 and 1
+    df[predictors] = df[predictors]/df[predictors].max()
+    # print(df.describe().transpose())
+
+    features = df[predictors].dropna(axis=1).values
+    labels = df[target_column].values
+    labels = labels.reshape((len(labels),))
+    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
+
+    param_grid = {
+        'activation' : ['identity', 'logistic', 'tanh', 'relu'],
+        'solver' : ['lbfgs', 'sgd', 'adam'],
+        'hidden_layer_sizes': [
+            (10,),(25,),(50,),(100,),(10,10,10),(25,25,25,25),(50,50),(25,25),(5,5,5,5,5,5,5),(25,50,25)
+            ]
+    }
+    # grid = GridSearchCV(MLPRegressor(), param_grid, refit=True, verbose=3)
+    # grid.fit(features_train, labels_train)
+    # print(f'Best parameters found on development set: {grid.best_params_}')
+
+    mlp = MLPRegressor(hidden_layer_sizes=(25,), activation='tanh', solver='sgd', max_iter=500)
+    mlp.fit(features_train, labels_train)
+
+    predict_train = mlp.predict(features_train)
+    predict_test = mlp.predict(features_test)
+
+    # print(f'Training difference: {round(abs(predict_train - labels_train).mean(), 2)}')
+    # print(f'Testing  difference: {round(abs(predict_test - labels_test).mean(), 2)}')
+    return abs(predict_test - labels_test).mean()
+
+
 def plot_accuracies(accuracies, column, name, filepath, save=True):
     sns.relplot(kind='line', x='max depth', y=column, data=accuracies)
     plt.title(f'{name} Accuracy as Max Depth Changes')
@@ -144,9 +192,10 @@ def plot_accuracies(accuracies, column, name, filepath, save=True):
     plt.show()  # Display the graph
     
 
-def neural_network():
-    pass
-
 if __name__ == '__main__':
-    for col in ['revenue', 'audience', 'expert']:
-        regressive_model(col, error=10)
+    # for col in ['revenue', 'audience', 'expert']:
+    #     regressive_model(col, error=10)
+    sum = list()
+    for i in range(5):
+        sum.append(neural_network())
+    print(np.mean(sum))
