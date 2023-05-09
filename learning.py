@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split,GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
 
@@ -156,27 +156,30 @@ def neural_network():
     features = df[predictors].dropna(axis=1).values
     labels = df[target_column].values
     labels = labels.reshape((len(labels),))
-    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
+    # REMOVE RANDOM STATE ONCE WORKING
+    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25, random_state=1)
 
     param_grid = {
         'activation' : ['identity', 'logistic', 'tanh', 'relu'],
         'solver' : ['lbfgs', 'sgd', 'adam'],
         'hidden_layer_sizes': [
-            (10,),(25,),(50,),(100,),(10,10,10),(25,25,25,25),(50,50),(25,25),(5,5,5,5,5,5,5),(25,50,25)
-            ]
+            (10,),(20,),(25,),(35,),(50,),(100,),(10,10,10),(10,10),(50,50),(25,25)
+            ],
+        'learning_rate_init' : [0.01, 0.0075, 0.005, 0.0025, 0.001]
     }
     # grid = GridSearchCV(MLPRegressor(), param_grid, refit=True, verbose=3)
     # grid.fit(features_train, labels_train)
     # print(f'Best parameters found on development set: {grid.best_params_}')
 
-    mlp = MLPRegressor(hidden_layer_sizes=(25,), activation='tanh', solver='sgd', max_iter=500)
+    # Create and fit the multilayer perceptron (MLP) model
+    mlp = MLPRegressor(hidden_layer_sizes=(25,), activation='tanh', solver='sgd', learning_rate_init=0.005, max_iter=500)
     mlp.fit(features_train, labels_train)
 
     predict_train = mlp.predict(features_train)
     predict_test = mlp.predict(features_test)
 
-    # print(f'Training difference: {round(abs(predict_train - labels_train).mean(), 2)}')
-    # print(f'Testing  difference: {round(abs(predict_test - labels_test).mean(), 2)}')
+    print(f'Training difference: {abs(predict_train - labels_train).astype(int)}  Training: {round(abs(predict_train - labels_train).mean(), 2)}')
+    print(f'Testing  difference: {abs(predict_test  -  labels_test).astype(int)}   Testing: {round(abs(predict_test  -  labels_test).mean(), 2)}')
     return abs(predict_test - labels_test).mean()
 
 
@@ -198,4 +201,4 @@ if __name__ == '__main__':
     sum = list()
     for i in range(5):
         sum.append(neural_network())
-    print(np.mean(sum))
+    print(f'Average test accuracy over {5} runs = {np.mean(sum)}')
