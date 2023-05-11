@@ -31,7 +31,6 @@ def merge_data(verbose=False):
     credits_df['a_list'] = np.zeros(len(credits_df), dtype=np.int8)
     credits_df['top_100'] = np.zeros(len(credits_df), dtype=np.int8)
     credits_df['top_1k'] = np.zeros(len(credits_df), dtype=np.int8)
-
     
     # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
@@ -43,7 +42,6 @@ def merge_data(verbose=False):
         alist_set = pickle.load(file)
     credits_df['a_list'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in alist_set for actor 
                                                                              in actors.split(', ')) else 0)
-    
     # Top-100 actors
     if not os.path.exists('data/top_100_actors.pickle'):
         print('File Not Found: Scraping Top 100 actors') if verbose else None
@@ -52,7 +50,6 @@ def merge_data(verbose=False):
         top_100_set = pickle.load(file)
     credits_df['top_100'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_100_set for actor 
                                                                               in actors.split(', ')) else 0)
-
     # Top-1000 actors
     if not os.path.exists('data/top_1k_actors.pickle'):
         print('File Not Found: Scraping Top 1000 actors') if verbose else None
@@ -61,7 +58,6 @@ def merge_data(verbose=False):
         top_1k_set = pickle.load(file)
     credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
                                                                              in actors.split(', ')) else 0)
-    
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
@@ -124,23 +120,28 @@ def merge_data(verbose=False):
 
     # Merge credits and metadata dataframes on the 'id' column
     master_df = pd.merge(credits_df, metadata_df, on='id')
+
     # If verbose is true, print the length of the merged dataframe: should stay constant throughout upcoming merges
     print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, rating_avgs, left_on='id', right_on='movieId', how='left')
+
     # Rename the 'rating' column to 'user_rating'
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
     # Merge the new dataframe with the links dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After THIRD merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
     # Merge the new dataframe with the rotten_tomatoes_df dataframe on the 'title' and 'movie_title' columns
     master_df = pd.merge(master_df, rotten_tomatoes_df, left_on='title', right_on='movie_title', how='left')
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
