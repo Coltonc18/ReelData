@@ -1,13 +1,9 @@
 import datetime
-import os
-import sys
-import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.neural_network import MLPRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -194,6 +190,8 @@ def neural_network(label_column, remake_data=False):
     target_column = [label_column]
     # Scales all data down to be between 0 and 1
     features = features/features.max()
+
+    # Print information about the DataFrame
     # print(df.describe().transpose())
 
     # Convert features into a numpy array
@@ -206,15 +204,15 @@ def neural_network(label_column, remake_data=False):
     # Separate the data into training and testing datasets
     features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25, random_state=1)
 
-    # Create a grid of hyper-parameters to test in the MLPRegressor
-    # param_grid = {
-    #     'activation' : ['identity', 'logistic', 'tanh', 'relu'],
-    #     'solver' : ['lbfgs', 'sgd', 'adam'],
-    #     'hidden_layer_sizes': [
-    #         (10,),(20,),(25,),(35,),(50,),(100,),(10,10,10),(10,10),(50,50),(25,25)
-    #         ],
-    #     'learning_rate_init' : [0.01, 0.0075, 0.005, 0.0025, 0.001]
-    # }
+    # Create a grid of hyper-parameters to test with the MLPRegressor
+    param_grid = {
+        'activation' : ['identity', 'logistic', 'tanh', 'relu'],
+        'solver' : ['lbfgs', 'sgd', 'adam'],
+        'hidden_layer_sizes': [
+            (10,),(20,),(25,),(35,),(50,),(100,),(10,10,10),(10,10),(50,50),(25,25)
+            ],
+        'learning_rate_init' : [0.01, 0.0075, 0.005, 0.0025, 0.001]
+    }
     # Create a GridSearchCV object, which will test the given model with each hyperparameter
     # grid = GridSearchCV(MLPRegressor(), param_grid, refit=True, verbose=3)
     # grid.fit(features_train, labels_train)
@@ -225,23 +223,46 @@ def neural_network(label_column, remake_data=False):
     mlp = MLPRegressor(hidden_layer_sizes=(25,), activation='tanh', solver='sgd', learning_rate_init=0.005, max_iter=500)
     mlp.fit(features_train, labels_train)
 
+    # Predict values for both training and testing features set
     predict_train = mlp.predict(features_train)
     predict_test = mlp.predict(features_test)
 
+    # Compare actual label values with the predicted values
     # print(f'Training difference: {abs(predict_train - labels_train).astype(int)}  Training: {round(abs(predict_train - labels_train).mean(), 2)}')
     # print(f'Testing  difference: {abs(predict_test  -  labels_test).astype(int)}   Testing: {round(abs(predict_test  -  labels_test).mean(), 2)}')
+
+    # Return the average difference of the predictions vs labels for both testing and training data
     return abs(predict_test - labels_test).mean(), abs(predict_train - labels_train).mean() # type: ignore
 
 def plot_accuracies(accuracies, column, name, filepath, save=True):
+    '''
+    Plots a linechart showing the accuracy of the DecisionTreeRegressor Model for different max_depth values.
+    Saves to file if requested.
+
+        Parameters:
+                accuracies (DataFrame): Contains the columns "max depth" and ``column`` as well as the accuracy of the model for each depth
+                column (str): Column name in ``accuracies`` that correlates to a percentage (usually test accuracy or train accuracy)
+                name (str): String to be put in the title of the graph such as "Expert Ratings" or "Revenue"
+                filepath (str): Filepath of image to be saved of the graph
+                save (bool): Default True, whether to save the image or not
+
+        Returns:
+                None
+    '''
+    # Make a line relplot of the max_depth of the model vs the accuracy
     sns.relplot(kind='line', x='max depth', y=column, data=accuracies)
+    # Add title and axis labels
     plt.title(f'{name} Accuracy as Max Depth Changes')
     plt.xlabel('Max Depth')
     plt.ylabel(f'{name} Accuracy')
+    # Resize the graph to fit all possible values
     plt.ylim(-1, 101)
 
+    # Save the graph
     if save:
         plt.savefig(filepath)
-    plt.show()  # Display the graph
+    # Display the graph
+    plt.show()
 
 if __name__ == '__main__':
     # neural_network(label_column='expert', remake_data=False)
