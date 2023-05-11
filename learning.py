@@ -175,7 +175,6 @@ def neural_network(label_column, remake_data=False):
     # print(f'Testing  difference: {abs(predict_test  -  labels_test).astype(int)}   Testing: {round(abs(predict_test  -  labels_test).mean(), 2)}')
     return abs(predict_test - labels_test).mean(), abs(predict_train - labels_train).mean()
 
-
 def plot_accuracies(accuracies, column, name, filepath, save=True):
     sns.relplot(kind='line', x='max depth', y=column, data=accuracies)
     plt.title(f'{name} Accuracy as Max Depth Changes')
@@ -186,7 +185,6 @@ def plot_accuracies(accuracies, column, name, filepath, save=True):
     if save:
         plt.savefig(filepath)
     plt.show()  # Display the graph
-
 
 if __name__ == '__main__':
     # neural_network(label_column='expert', remake_data=False)
