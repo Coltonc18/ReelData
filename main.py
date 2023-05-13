@@ -12,7 +12,6 @@ from webscraping import scrape_top_tier_actors
 
 
 def main():
-    # DELETE RATING_AVGERAGES.CSV AND RE-RUN MERGE DATA AND UNCOMMENT THE WEBSCRAPING PART WHEN NOT AT SCHOOL
     merge_data()
 
     # graph = Graphs()
@@ -31,7 +30,6 @@ def merge_data(verbose=False):
     credits_df['a_list'] = np.zeros(len(credits_df), dtype=np.int8)
     credits_df['top_100'] = np.zeros(len(credits_df), dtype=np.int8)
     credits_df['top_1k'] = np.zeros(len(credits_df), dtype=np.int8)
-
     
     # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
@@ -43,7 +41,6 @@ def merge_data(verbose=False):
         alist_set = pickle.load(file)
     credits_df['a_list'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in alist_set for actor 
                                                                              in actors.split(', ')) else 0)
-    
     # Top-100 actors
     if not os.path.exists('data/top_100_actors.pickle'):
         print('File Not Found: Scraping Top 100 actors') if verbose else None
@@ -52,7 +49,6 @@ def merge_data(verbose=False):
         top_100_set = pickle.load(file)
     credits_df['top_100'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_100_set for actor 
                                                                               in actors.split(', ')) else 0)
-
     # Top-1000 actors
     if not os.path.exists('data/top_1k_actors.pickle'):
         print('File Not Found: Scraping Top 1000 actors') if verbose else None
@@ -61,7 +57,6 @@ def merge_data(verbose=False):
         top_1k_set = pickle.load(file)
     credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
                                                                              in actors.split(', ')) else 0)
-    
     # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
     links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
@@ -124,23 +119,28 @@ def merge_data(verbose=False):
 
     # Merge credits and metadata dataframes on the 'id' column
     master_df = pd.merge(credits_df, metadata_df, on='id')
+
     # If verbose is true, print the length of the merged dataframe: should stay constant throughout upcoming merges
     print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, rating_avgs, left_on='id', right_on='movieId', how='left')
+
     # Rename the 'rating' column to 'user_rating'
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
     # Merge the new dataframe with the links dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After THIRD merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
     # Merge the new dataframe with the rotten_tomatoes_df dataframe on the 'title' and 'movie_title' columns
     master_df = pd.merge(master_df, rotten_tomatoes_df, left_on='title', right_on='movie_title', how='left')
+
     # If verbose is true, print the length and columns of the merged dataframe
     print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
@@ -159,12 +159,17 @@ def merge_data(verbose=False):
     # Save the dataframe to a file
     master_df.to_csv("data/master_dataset.csv", index=False)
 
-'''
-Takes a row from the rotten_tomatoes_critic_reviews.csv dataset and converts the expert ratings from
-fraction or letter value into a score out of 100 points. If there is no value, but only a "Fresh" or
-"Rotten" label, the value is set to 80/100 and 40/100 respectively.
-'''
 def _convert_ratings(row):
+    '''
+    Converts ratings from fraction or letter values into a percentage score out of 100 points. 
+    If there is no value, but only a "Fresh" or "Rotten" label, the value is set to 80% and 40% respectively.
+
+        Parameters:
+                row (Series): Row from a DataFrame which will have its expert_rating value normalized
+
+        Returns:
+                value (float): New calculated rating for that row
+    '''
     # Pull the rating value out of the column
     value = row['review_score']
 
@@ -172,7 +177,7 @@ def _convert_ratings(row):
     if isinstance(value, str):
         value = value.replace(' ', '')
 
-    # Convert fractional ratings into a score/100 rating
+    # Convert fractional ratings into a score / 100 rating
     if '/' in str(value):
         fraction = value.split('/')
         try:
@@ -193,13 +198,18 @@ def _convert_ratings(row):
     # If nothing else, the value is already set, and will be returned as is
     return float(value)
 
-'''
-Method is intended to be used in a DataFrame.apply(json_to_columns) application.
-
-Takes a cell from the DataFrame and converts the stringified JSON in that cell to a comma
-separated list of values as defined by the parameter "key", which is then returned
-'''
 def json_to_columns(cell, key):
+    '''
+    Intended to be used in a ``df.apply(json_to_columns)`` application.
+    Takes a cell from the ``DataFrame`` and converts the stringified JSON in that cell to a Comma-Separated list of values
+
+        Parameters:
+                cell (str): Stringified JSON which is to be converted
+                key (str): The key value in the JSON dictionary that will return the indended value
+
+        Returns:
+                values (str): Comma-Separated list in the format "item1, item2, item3" of all ``values`` in the JSON with the indicated ``key``
+    '''
     try:
         # Use regex look aheads and look behinds to avoid replacing apostrophes in the middle of
         # a word with a double quotation, which would mess up the json parsing
@@ -208,10 +218,10 @@ def json_to_columns(cell, key):
         # Replace all single quotes with double quotes
         cell = cell.replace("'", '"')
 
-        # Replace occurrences of None because it messes up the JSON parsing
+        # Replace occurrences of None with "None" because it messes up the JSON parsing
         cell = cell.replace('None', '"None"')
 
-        # Turn the apostophes back into single quotes
+        # Turn the apostrophes back into single quotes
         cell = cell.replace("<apostrophe>", "'")
 
         # Load the json string into a list of dictionaries
@@ -232,14 +242,17 @@ def json_to_columns(cell, key):
     
     except json.decoder.JSONDecodeError:
         # In certain cases, there are apostrophes that cannot be caught with the regex expression above,
-        # which causes the JSON parser to throw an error as the strings aren't closed properly. In that case,
-        # just return an empty string
+        # which causes the JSON parser to throw an error as the strings aren't closed properly. In that 
+        # rare case, just return an empty string
         return ''
 
-'''
-DEPRECATED: Method to test the time difference between opening a csv file vs a gzipped csv file
-'''
 def test_times():
+    '''
+    DEPRECATED
+    ----------
+
+    Tests the time difference between opening a csv file vs a gzipped csv file of the same data
+    '''
     for file in ['credits', 'keywords', 'links', 'movies_metadata', 'ratings']:
         t1 = time.time()
         credits = pd.read_csv(f'data/gzips/{file}.csv.gz', compression='gzip')
