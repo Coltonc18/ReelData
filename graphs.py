@@ -13,7 +13,7 @@ class Graphs:
             'budget_expertRating': Graphs.budget_expertRating,
             'budget_userRating': Graphs.budget_userRating,
             'releaseDate_totalRevenue': Graphs.releaseDate_totalRevenue,
-            'userRating_expert_rating': Graphs.userRating_expert_rating,
+            'userRating_expertRating': Graphs.userRating_expertRating,
             'companies_totalRevenue': Graphs.companies_totalRevenue,
             'companies_averageRevenue': Graphs.companies_averageRevenue,
             'genres_userRating': Graphs.genres_userRating,
@@ -36,7 +36,6 @@ class Graphs:
                 self._functions[arg]()
             except KeyError:
                 print(f'Function {arg} does not exist')
-
 
     @staticmethod
     def budget_expertRating():
@@ -118,9 +117,8 @@ class Graphs:
         # display the chart
         chart.save('graphs/releaseDate_totalRevenue.html')
 
-
     @staticmethod
-    def userRating_expert_rating():
+    def userRating_expertRating():
         # load the data
         data = pd.read_csv("data/master_dataset.csv")
 
@@ -142,7 +140,7 @@ class Graphs:
         )
 
         # Display the chart
-        chart.save('graphs/userRating_expert_rating.html')
+        chart.save('graphs/userRating_expertRating.html')
 
     @staticmethod
     def companies_totalRevenue():
