@@ -119,6 +119,34 @@ class Graphs:
         chart.save('graphs/releaseDate_totalRevenue.html')
 
     @staticmethod
+    def releaseDate_avgRating():
+        # Load the data
+        data = pd.read_csv("data/master_dataset.csv")
+
+        # Filter data by year 1930 - 2017
+        data = data.query("release_date >= '1930-01-01' and release_date < '2017-01-01'")
+
+        # Calculate the mean expert rating for each year
+        avg_rating = data.groupby(pd.Grouper(key='release_date', freq='Y')).mean()['RT_expert_rating'].reset_index()
+
+        # Create a bar graph showing average expert rating over the years
+        chart = alt.Chart(avg_rating).mark_bar(color='green').encode(
+            x=alt.X('year(release_date):T', axis=alt.Axis(title='Release Date'), scale=alt.Scale(domain=(1930,2016))),
+            y=alt.Y('RT_expert_rating', axis=alt.Axis(title='Average Expert Rating')),
+            tooltip=['year(release_date):T', 'RT_expert_rating'],
+        )
+
+        # set chart properties
+        chart = chart.properties(
+            width=800,
+            height=400,
+            title='Average Rating by Year'
+        )
+
+        # display the chart
+        chart.save('graphs/releaseDate_avgRating.html')
+
+    @staticmethod
     def userRating_expert_rating():
         # load the data
         data = pd.read_csv("data/master_dataset.csv")
