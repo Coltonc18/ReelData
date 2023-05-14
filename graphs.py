@@ -9,6 +9,12 @@ from vega_datasets import data
 class Graphs:
 
     def __init__(self, *args):
+        '''
+        Initializes a GraphGenerator object with a dictionary of available graph functions and creates the specified graphs.
+
+        Args:
+            *args: A variable number of string arguments that correspond to the available graph function names.
+        '''
         self._functions = {
             'budget_expertRating': Graphs.budget_expertRating,
             'budget_userRating': Graphs.budget_userRating,
@@ -28,6 +34,13 @@ class Graphs:
         self.create_graphs(*args)
 
     def create_graphs(self, *args, all=False):
+        '''
+        Creates the specified graphs based on the given arguments.
+
+        Args:
+            *args: A variable number of string arguments that correspond to the available graph function names.
+            all (bool, optional): If True, creates all available graphs. Defaults to False.
+            '''
         if all:
             for function in self._functions.keys():
                 self._functions[function]()
