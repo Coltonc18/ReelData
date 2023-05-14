@@ -40,6 +40,11 @@ class Graphs:
 
     @staticmethod
     def budget_expertRating():
+        '''
+        Generates a scatter plot showing the relationship between movie budget and expert rating, using data from the
+        'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
+        The resulting chart is saved to 'graphs/budget_expertRating.html'.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -67,6 +72,11 @@ class Graphs:
 
     @staticmethod
     def budget_userRating():
+        '''
+        Generates a scatter plot showing the relationship between movie budget and user rating, using data from the
+        'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
+        The resulting chart is saved to 'graphs/budget_userRating.html'.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -95,6 +105,11 @@ class Graphs:
 
     @staticmethod
     def releaseDate_totalRevenue():
+        '''
+        Generates a bar graph showing the total revenue of movies by release year, using data from the 'master_dataset.csv' file.
+        Only movies released between 1930 and 2016 are included in the plot. The resulting chart is saved to 
+        'graphs/releaseDate_totalRevenue.html'.
+        '''
         # Load the data
         data = pd.read_csv("data/master_dataset.csv")
 
@@ -120,6 +135,12 @@ class Graphs:
 
     @staticmethod
     def userRating_expertRating():
+        '''
+        Create a scatter plot showing the relationship between user rating and expert rating for movies in the dataset.
+        Load the dataset from a CSV file and filter out any movies with zero budgets or no expert rating data.
+        Then create a scatter plot using the user rating and expert rating data, with each point representing a movie.
+        Save the chart as an HTML file.
+        '''
         # load the data
         data = pd.read_csv("data/master_dataset.csv")
 
@@ -145,6 +166,12 @@ class Graphs:
 
     @staticmethod
     def companies_totalRevenue():
+        '''
+        Create a bar chart showing the top production companies by total revenue.
+        Load the dataset from a CSV file and group the data by production company.
+        Extract the top 15 production companies based on total revenue and create a bar chart showing their revenue.
+        Save the chart as an HTML file.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -179,6 +206,14 @@ class Graphs:
 
     @staticmethod
     def companies_averageRevenue():
+        '''
+        Create a bar chart showing the top production companies by average revenue.
+        Load the dataset from a CSV file and group the data by production company.
+        Extract the top 15 production companies based on total revenue and filter the data to only include movies
+        produced by these companies.
+        Then extract the top 15 production companies based on average revenue and create a bar chart showing their revenue.
+        Save the chart as an HTML file.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
         top_comps = set(data.groupby('production_companies')['revenue'].sum().head(15).index.to_list())
@@ -195,8 +230,6 @@ class Graphs:
         # Define the color scale as a gradient with the desired number of colors
         num_colors = len(top_producers)
         color_scale = alt.Scale(scheme='yellowgreenblue', domain=top_producers)
-
-
 
         # Create a chart for all selected production companies and sort in decsending order
         chart = alt.Chart(data).mark_bar().encode(
@@ -216,6 +249,11 @@ class Graphs:
 
     @staticmethod
     def genres_userRating():
+        '''
+        Loads movie data from a CSV file, filters it by year, calculates the mean expert rating
+        for each year, and creates a line graph showing the average expert rating over the years.
+        The resulting chart is saved as an HTML file.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -256,6 +294,11 @@ class Graphs:
 
     @staticmethod
     def genres_expertRating():
+        '''
+        Loads movie data from a CSV file, filters it by year, calculates the mean expert rating
+        for each year, and creates a line graph showing the average expert rating over the years.
+        The resulting chart is saved as an HTML file.
+        '''
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -296,6 +339,10 @@ class Graphs:
 
     @staticmethod
     def genres_totalRevenue():
+        '''
+        Loads movie data from a CSV file and creates a bar chart showing the total revenue for each genre.
+        The resulting chart is saved as an HTML file.
+        '''
         # load the data
         data = pd.read_csv("data/master_dataset.csv")
 
@@ -331,6 +378,11 @@ class Graphs:
 
     @staticmethod
     def genres_averageRevenue():
+        '''
+        Loads movie data from a CSV file, filters it by non-zero revenue and non-missing genres,
+        calculates the average revenue for each genre, sorts the genres by revenue in descending order, 
+        and creates a bar chart showing average revenue by genre. The chart is saved as an HTML file.
+        '''
         # load the data
         data = pd.read_csv("data/master_dataset.csv")
 
@@ -369,6 +421,11 @@ class Graphs:
 
     @staticmethod
     def actorType_averageRevenue():
+        '''
+        Loads movie data from a CSV file and calculates the average revenue for movies with top actors 
+        categorized as A List, Top 100, Top 1K, and No Top Actors. It creates a bar chart showing the 
+        average revenue by actor type and saves the chart as an HTML file.
+        '''
         # load data
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -408,6 +465,11 @@ class Graphs:
 
     @staticmethod
     def actorType_averageRating():
+        '''
+        Loads movie data from a CSV file and calculates the average audience rating for movies with top 
+        actors categorized as A List, Top 100, Top 1K, and No Top Actors. It creates a bar chart showing 
+        the average audience rating by actor type and saves the chart as an HTML file.
+        '''
         # load data
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -447,6 +509,11 @@ class Graphs:
     
     @staticmethod
     def actorType_expertRating():
+        '''
+        Loads movie data from a CSV file, calculates the average expert rating for movies
+        with A-list actors, top 100 actors, top 1k actors, and movies without top actors, and creates a
+        bar chart using Altair to visualize the results. The chart is saved in an HTML file.
+        '''
         # load data
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -485,6 +552,11 @@ class Graphs:
 
     @staticmethod
     def releaseDate_avgRating():
+        '''
+        Loads movie data from a CSV file, filters it by year, calculates the mean expert rating
+        for each year, and creates a line graph showing the average expert rating over the years.
+        The resulting chart is saved as an HTML file.
+        '''
         # Load the data
         data = pd.read_csv("data/master_dataset.csv")
 
