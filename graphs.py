@@ -58,28 +58,36 @@ class Graphs:
         'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
         The resulting chart is saved to 'graphs/budget_expertRating.html'.
         '''
+        alt.data_transformers.disable_max_rows()
+
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
         # Filter out movies with budgets less than $10,000
-        data = data[data['budget'] >= 10000]
+        data = data[(data['budget'] >= 10000) & (data['budget'] <= 300000000)]
 
-        # filter out movies with budgets and ratings that are 0
+        # Filter out movies with budgets and ratings that are 0
         data = data.query('budget > 0')
         data = data.query('RT_expert_rating > 0')
 
-        # Create the scater plot 
+        # Define color scheme
+        color_scheme = {
+            'Certified Fresh': '#187498',  # Blue
+            'Fresh': '#EE3030',  # Red
+            'Rotten': '#36AE7C'  # Green
+        }
+
+        # Create the scatter plot 
         chart = alt.Chart(data).mark_point().encode(
             x=alt.X('budget', axis=alt.Axis(title='Budget')),
             y=alt.Y('RT_expert_rating', axis=alt.Axis(title='Expert Rating')),
-            color=alt.Color('tomatometer_status', legend=alt.Legend(title='Tomato Status')),
+            color=alt.Color('tomatometer_status:N', legend=alt.Legend(title='Tomato Status'), scale=alt.Scale(range=list(color_scheme.values()))),
             tooltip=['title','budget', 'RT_expert_rating']
         ).properties(
             title='Movie Budget vs Expert Ratings',
             width=800,
             height=400
         ).interactive()
-
         # Display the chart
         chart.save('graphs/budget_expertRating.html')
 
@@ -94,18 +102,24 @@ class Graphs:
         data = pd.read_csv('data/master_dataset.csv')
 
         # Filter out budgets less than $10,000
-        data = data[data['budget'] >= 10000]
+        data = data[(data['budget'] >= 10000) & (data['budget'] <= 300000000)
+        ]
 
         # Filter out budgets that are zero
         data = data.query('budget > 0')
         data = data.query('audience_rating > 0')
-        data = data.dropna(subset=['audience_rating'])
+        data = data.dropna(subset=['audience_status'])
+
+        color_scheme = {
+            'Upright': '#EE3030',  # Red
+            'Spilled': '#36AE7C'  # Green
+        }
 
         # Create the scatter plot
         chart = alt.Chart(data).mark_point().encode(
             x=alt.X('budget', axis=alt.Axis(title='Budget')),
             y=alt.Y('audience_rating', axis=alt.Axis(title='User Rating')),
-            color=alt.Color('audience_status', legend=alt.Legend(title='Tomato Status')),
+            color=alt.Color('audience_status:N', legend=alt.Legend(title='Tomato Status'), scale=alt.Scale(range=list(color_scheme.values()))),
             tooltip=['title','budget', 'audience_rating']
         ).properties(
             title='Movie Budget vs User Ratings',
