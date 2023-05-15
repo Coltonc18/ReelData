@@ -370,7 +370,8 @@ class Graphs:
         Loads movie data from a CSV file and creates a bar chart showing the total revenue for each genre.
         The resulting chart is saved as an HTML file.
         '''
-        # load the data
+
+        # Load the data
         data = pd.read_csv("data/master_dataset.csv")
 
         # Filter out movies with zero revenue and missing genres
@@ -382,15 +383,15 @@ class Graphs:
 
         # Remove duplicates from genres column
         data['genres'] = data['genres'].str.strip()
-        data = data.drop_duplicates(subset=['genres'])
+        data = data.drop_duplicates(subset=['genres', 'imdb_id'])  # Consider unique (genre, imdb_id) pairs
 
         # Calculate the total revenue for each genre
-        genre_revenue = data.groupby('genres')['revenue'].sum().reset_index()
+        genre_revenue_sum = data.groupby('genres')['revenue'].sum().reset_index()
 
         # Create the bar graph showing revenue by genre
-        chart = alt.Chart(genre_revenue).mark_bar().encode(
+        chart = alt.Chart(genre_revenue_sum).mark_bar().encode(
             x=alt.X('genres:N', sort='-y', axis=alt.Axis(labelAngle=45, title='Genres')),
-            y=alt.Y('revenue:Q', axis=alt.Axis(title='Revenue')),
+            y=alt.Y('revenue:Q', axis=alt.Axis(title='Total Revenue')),
             color=alt.Color('genres:N', sort=alt.EncodingSortField('revenue', order='descending'),
                             scale=alt.Scale(scheme='yellowgreenblue', reverse=False), legend=None),
             tooltip=['genres:N', 'revenue:Q']
@@ -410,30 +411,31 @@ class Graphs:
         calculates the average revenue for each genre, sorts the genres by revenue in descending order, 
         and creates a bar chart showing average revenue by genre. The chart is saved as an HTML file.
         '''
-        # load the data
+
+        # Load the data
         data = pd.read_csv("data/master_dataset.csv")
 
-        # filter out movies with zero revenue and missing genres
+        # Filter out movies with zero revenue and missing genres
         data = data.query('revenue > 0')
         data = data.dropna(subset=['genres'])
 
-        # explode the genres column to make a row for each genre in a movie
+        # Explode the genres column to make a row for each genre in a movie
         data = data.assign(genres=data['genres'].str.split(',')).explode('genres')
 
         # Remove duplicates from genres column
         data['genres'] = data['genres'].str.strip()
-        data = data.drop_duplicates(subset=['genres'])
+        data = data.drop_duplicates(subset=['genres', 'imdb_id'])  # Consider unique (genre, imdb_id) pairs
 
-        # calculate the average revenue for each genre
+        # Calculate the average revenue for each genre
         genre_revenue = data.groupby('genres')['revenue'].mean().reset_index()
 
-        # sort the genres by revenue in descending order
+        # Sort the genres by revenue in descending order
         genre_revenue = genre_revenue.sort_values('revenue', ascending=False)
 
-        # create the bar chart showing average revenue by genre
+        # Create the bar chart showing average revenue by genre
         chart = alt.Chart(genre_revenue).mark_bar().encode(
             x=alt.X('genres:N', sort='-y', axis=alt.Axis(labelAngle=45, title='Genres')),
-            y=alt.Y('revenue:Q', axis=alt.Axis(title='Revenue')),
+            y=alt.Y('revenue:Q', axis=alt.Axis(title='Average Revenue')),
             color=alt.Color('genres:N', sort=alt.EncodingSortField('revenue', order='descending'),
                             scale=alt.Scale(scheme='yellowgreenblue', reverse=False), legend=None),
             tooltip=['genres:N', 'revenue:Q']
