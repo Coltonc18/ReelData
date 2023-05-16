@@ -98,6 +98,7 @@ class Graphs:
         'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
         The resulting chart is saved to 'graphs/budget_userRating.html'.
         '''
+        
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
@@ -111,9 +112,10 @@ class Graphs:
         data = data.dropna(subset=['audience_status'])
 
         color_scheme = {
-            'Upright': '#EE3030',  # Red
-            'Spilled': '#36AE7C'  # Green
+            'Spilled': '#36AE7C',
+            'Upright': '#EE3030'  
         }
+            
 
         # Create the scatter plot
         chart = alt.Chart(data).mark_point().encode(
