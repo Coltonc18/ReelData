@@ -7,9 +7,9 @@ import time
 import numpy as np
 import pandas as pd
 
+import testing
 from graphs import Graphs
 from learning import run_learning
-import testing
 from webscraping import scrape_top_tier_actors
 
 

@@ -4,10 +4,11 @@ import pickle
 import pandas as pd
 
 from cse163_utils import assert_equals
+from graphs import Graphs
 from learning import get_learning_dataset
 from main import merge_data
 from webscraping import scrape_top_tier_actors
-from graphs import Graphs
+
 
 def run_all_tests():
     create_test_datasets()
