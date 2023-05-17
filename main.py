@@ -18,6 +18,7 @@ def main():
     # graph.create_graphs(all=True)
     pass
 
+
 def merge_data(verbose=False, prefix='data/'):
     # Read the 'credits.csv' file and select only the 'id' and 'cast' columns
     # Set low_memory=False to avoid warning about mixed dtypes in the 'cast' column
@@ -151,6 +152,7 @@ def merge_data(verbose=False, prefix='data/'):
     # Save the dataframe to a file
     master_df.to_csv(f'{prefix}master_dataset.csv', index=False)
 
+
 def _convert_ratings(row):
     '''
     Converts ratings from fraction or letter values into a percentage score out of 100 points. 
@@ -189,6 +191,7 @@ def _convert_ratings(row):
     
     # If nothing else, the value is already set, and will be returned as is
     return float(value)
+
 
 def json_to_columns(cell, key):
     '''
@@ -237,6 +240,7 @@ def json_to_columns(cell, key):
         # which causes the JSON parser to throw an error as the strings aren't closed properly. In that 
         # rare case, just return an empty string
         return ''
+
 
 def test_times():
     '''

@@ -96,6 +96,7 @@ def scrape_top_tier_actors(pages, test=False, prefix='data/'):
     elif test and (('top_100' not in pages) or ('top_1k' not in pages)):
         print('Could not check for page accuracy: top_100 and top_1k were not selected')
 
+
 def consume_queue(filepath):
     '''
     Using a helper thread, empties the objects from ``csv_queue`` into the designated filepath.
@@ -119,6 +120,7 @@ def consume_queue(filepath):
             else:
                 # If the queue is empty, sleep for a second to save resources before re-checking
                 time.sleep(1)
+
 
 def web_scraping_tomatoes(clear=True, verbose=True):
     '''
@@ -163,6 +165,7 @@ def web_scraping_tomatoes(clear=True, verbose=True):
     # Print the time elapsed to scrape all pages
     print(f"    Took {t1-t0} seconds to scrape {len(titles)} pages.") if verbose else None
 
+
 def _download_data_tomatoes(titles, verbose=True):
     '''
     Creates a thread pool using the ``ThreadPoolExecutor`` and maps each thread to run ``_access_page_tomatoes()``
@@ -184,6 +187,7 @@ def _download_data_tomatoes(titles, verbose=True):
 
     # Close the csv_writer thread when all pages have been scraped
     csv_queue.put("done")
+
 
 def _access_page_tomatoes(movie, verbose=True):
     '''
@@ -238,6 +242,7 @@ def _access_page_tomatoes(movie, verbose=True):
     we had already collected. Therefore, the below is considered dead code. 
 '''
 
+
 def web_scraping_imdb():
     '''
     Deprecated
@@ -269,6 +274,7 @@ def web_scraping_imdb():
     t1 = time.time()
     print(f"    Took {t1-t0} seconds to scrape {len(imdb_ids)} pages.")
 
+
 def download_data_imdb(imdb_ids):
     '''
     Deprecated
@@ -289,6 +295,7 @@ def download_data_imdb(imdb_ids):
 
     # Put "done" in the csv_queue when done scraping to close the Thread
     csv_queue.put("done")
+
 
 def access_page_imdb(id):
     '''
@@ -332,6 +339,7 @@ def access_page_imdb(id):
 
     # Select the rating from the page and place it inot the csv_queue
     csv_queue.put(f'{id},{soup.select("span.sc-bde20123-1.iZlgcd")[0].get_text().strip()}\n')
+
 
 def download_data_slow(imdb_ids):
     '''

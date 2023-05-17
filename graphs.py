@@ -22,7 +22,6 @@ class Graphs:
             'releaseDate_totalRevenue': Graphs.releaseDate_totalRevenue,
             'userRating_expertRating': Graphs.userRating_expertRating,
             'companies_totalRevenue': Graphs.companies_totalRevenue,
-            'companies_averageRevenue': Graphs.companies_averageRevenue,
             'genres_userRating': Graphs.genres_userRating,
             'genres_expertRating': Graphs.genres_expertRating,
             'genres_totalRevenue': Graphs.genres_totalRevenue,
@@ -57,7 +56,8 @@ class Graphs:
     def budget_expertRating():
         '''
         Generates a scatter plot showing the relationship between movie budget and expert rating, using data from the
-        'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
+        'master_dataset.csv' file. Movies with budgets less than $10,000 or more that $300000000 and 
+        budgets/ratings equal to 0 are excluded from the plot.
         The resulting chart is saved to 'graphs/budget_expertRating.html'.
         '''
 
@@ -67,7 +67,7 @@ class Graphs:
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
-        # Filter out movies with budgets less than $10,000
+        # Filter out movies with budgets less than $10,000 and budgets over $300000000 to get rid of outliers
         data = data[(data['budget'] >= 10000) & (data['budget'] <= 300000000)]
 
         # Filter out movies with budgets and ratings that are 0
@@ -95,18 +95,20 @@ class Graphs:
         # Display the chart
         chart.save('graphs/budget_expertRating.html')
 
+
     @staticmethod
     def budget_userRating():
         '''
         Generates a scatter plot showing the relationship between movie budget and user rating, using data from the
-        'master_dataset.csv' file. Movies with budgets less than $10,000 and budgets/ratings equal to 0 are excluded from the plot.
+        'master_dataset.csv' file. Movies with budgets less than $10,000 or more than $300000000 to get rid of outliers 
+        and budgets/ratings equal to 0 are excluded from the plot.
         The resulting chart is saved to 'graphs/budget_userRating.html'.
         '''
         
         # Load the data from the CSV file
         data = pd.read_csv('data/master_dataset.csv')
 
-        # Filter out budgets less than $10,000
+        # Filter out movies with budgets less than $10,000 and budgets over $300000000 to get rid of outliers
         data = data[(data['budget'] >= 10000) & (data['budget'] <= 300000000)
         ]
 
@@ -123,11 +125,11 @@ class Graphs:
         # Create the scatter plot
         chart = alt.Chart(data).mark_point().encode(
             x=alt.X('budget', axis=alt.Axis(title='Budget')),
-            y=alt.Y('audience_rating', axis=alt.Axis(title='User Rating')),
+            y=alt.Y('audience_rating', axis=alt.Axis(title='Audience Rating')),
             color=alt.Color('audience_status:N', legend=alt.Legend(title='Tomato Status'), scale=alt.Scale(range=list(color_scheme.values()))),
             tooltip=['title','budget', 'audience_rating']
         ).properties(
-            title='Movie Budget vs User Ratings',
+            title='Movie Budget vs Audience Ratings',
             width=800,
             height=400
         ).interactive()
@@ -135,11 +137,12 @@ class Graphs:
         # Display the chart
         chart.save('graphs/budget_userRating.html')
 
+
     @staticmethod
     def releaseDate_totalRevenue():
         '''
         Generates a bar graph showing the total revenue of movies by release year, using data from the 'master_dataset.csv' file.
-        Only movies released between 1930 and 2016 are included in the plot. The resulting chart is saved to 
+        Only movies released between 1930 and 2017 are included in the plot. The resulting chart is saved to 
         'graphs/releaseDate_totalRevenue.html'.
         '''
         alt.data_transformers.disable_max_rows()
@@ -165,12 +168,13 @@ class Graphs:
         # display the chart
         chart.save('graphs/releaseDate_totalRevenue.html')
 
+
     @staticmethod
     def userRating_expertRating():
         '''
-        Create a scatter plot showing the relationship between user rating and expert rating for movies in the dataset.
+        Create a scatter plot showing the relationship between audience rating and expert rating for movies in the dataset.
         Load the dataset from a CSV file and filter out any movies with zero budgets or no expert rating data.
-        Then create a scatter plot using the user rating and expert rating data, with each point representing a movie.
+        Then create a scatter plot using the audience rating and expert rating data, with each point representing a movie.
         Save the chart as an HTML file.
         '''
 
@@ -180,22 +184,23 @@ class Graphs:
         # Filter out budgets that are zero
         data = data.query('budget > 0')
 
-        # filter out rows where RT_expert_rating is 0
+        # filter out rows where RT_expert_rating is 0 audience ratings not n/a
         data = data[(data['RT_expert_rating'] != 0) & (data['audience_rating'].notna())]
 
-        # create a scatter plot showing the relationship between user rating and expert rating
+        # create a scatter plot showing the relationship between audience rating and expert rating
         chart = alt.Chart(data).mark_point().encode(
-            x=alt.X('user_rating', axis=alt.Axis(title='User Rating')),
+            x=alt.X('user_rating', axis=alt.Axis(title='Audience Rating')),
             y=alt.Y('RT_expert_rating', axis=alt.Axis(title='Expert Rating')),
             tooltip=['title','user_rating', 'RT_expert_rating', 'budget']
         ).properties(
             width=800,
             height=400,
-            title='User Rating vs Expert Rating'
+            title='Audience Rating vs Expert Rating'
         )
 
         # Display the chart
         chart.save('graphs/userRating_expertRating.html')
+
 
     @staticmethod
     def companies_totalRevenue():
@@ -213,7 +218,7 @@ class Graphs:
         data['production_companies'] = data['production_companies'].str.split(", ")
         data = data.explode('production_companies')
 
-        # Filter to get the top 30 production companies based on total revenue and put it into a list
+        # Filter to get the top 15 production companies based on total revenue and put it into a list
         top_producers = data.groupby('production_companies')['revenue'].sum().sort_values(ascending=False).head(15).index.tolist()
         data = data[data['production_companies'].isin(top_producers)]
 
@@ -238,55 +243,12 @@ class Graphs:
         # Display the chart
         chart.save('graphs/companies_totalRevenue.html')
 
-    @staticmethod
-    def companies_averageRevenue():
-        '''
-        Create a bar chart showing the top production companies by average revenue.
-        Load the dataset from a CSV file and group the data by production company.
-        Extract the top 15 production companies based on total revenue and filter the data to only include movies
-        produced by these companies.
-        Then extract the top 15 production companies based on average revenue and create a bar chart showing their revenue.
-        Save the chart as an HTML file.
-        '''
-
-        # Load the data from the CSV file
-        data = pd.read_csv('data/master_dataset.csv')
-        top_comps = set(data.groupby('production_companies')['revenue'].sum().head(15).index.to_list())
-
-        # Extract the name of each production company from the dictionary and explode the column
-        data['production_companies'] = data['production_companies'].apply(lambda x: set(str(x).split(', ')))
-        data = data.loc[[any(company in top_comps for company in row) for row in data['production_companies']]]
-        data = data.explode('production_companies')
-
-        # Filter to get the top 30 production companies based on average revenue
-        top_producers = data.groupby('production_companies')['revenue'].mean().sort_values(ascending=False).index.tolist()
-
-        data = data[data['production_companies'].isin(top_producers)]
-        # Define the color scale as a gradient with the desired number of colors
-        num_colors = len(top_producers)
-        color_scale = alt.Scale(scheme='goldred', domain=top_producers)
-
-        # Create a chart for all selected production companies and sort in decsending order
-        chart = alt.Chart(data).mark_bar().encode(
-            x=alt.X('production_companies:N', sort='-y', axis=alt.Axis(labelAngle=45, title='Producion Companies')),
-            y=alt.Y('mean(revenue):Q', axis=alt.Axis(title='Average Revenue')),
-            color=alt.Color('production_companies:N', sort=alt.EncodingSortField('revenue', order='descending'),
-                            scale=color_scale, legend=None),
-            tooltip=['production_companies:N', 'mean(revenue):Q']
-        ).properties(
-            title='Top 10 Production Companies vs Average Revenue',
-            width=800,
-            height=400
-        ).interactive()
-
-        # Display the chart
-        chart.save('graphs/companies_averageRevenue.html')
 
     @staticmethod
     def genres_userRating():
         '''
-        Loads movie data from a CSV file, filters it by year, calculates the mean expert rating
-        for each year, and creates a line graph showing the average expert rating over the years.
+        Loads movie data from a CSV file, filters it by year, calculates the mean user rating
+        for each year, and creates a line graph showing the average user rating over the years.
         The resulting chart is saved as an HTML file.
         '''
 
@@ -317,16 +279,17 @@ class Graphs:
         # Create a stacked bar chart showing the average user rating for each genre
         chart = alt.Chart(genre_ratings).mark_bar().encode(
             x=alt.X('genres:N', sort='-y', axis=alt.Axis(labelAngle=45, title='Genres')),
-            y=alt.Y('user_rating:Q', axis=alt.Axis(title='Average User Rating')),
+            y=alt.Y('user_rating:Q', axis=alt.Axis(title='Average Audience Rating')),
             color=alt.Color('rank:O', scale=color_scale, legend=None)
         ).properties(
-            title='Genre vs Average User Rating',
+            title='Genre vs Average Audience Rating',
             width=800,
             height=400
         ).interactive()
 
         # Display the chart
         chart.save('graphs/genres_userRating.html')
+
 
     @staticmethod
     def genres_expertRating():
@@ -374,6 +337,7 @@ class Graphs:
         # Display the chart
         chart.save('graphs/genres_expertRating.html')
 
+
     @staticmethod
     def genres_totalRevenue():
         '''
@@ -393,7 +357,7 @@ class Graphs:
 
         # Remove duplicates from genres column
         data['genres'] = data['genres'].str.strip()
-        data = data.drop_duplicates(subset=['genres', 'imdb_id'])  # Consider unique (genre, imdb_id) pairs
+        data = data.drop_duplicates(subset=['genres', 'imdb_id'])
 
         # Calculate the total revenue for each genre
         genre_revenue_sum = data.groupby('genres')['revenue'].sum().reset_index()
@@ -416,6 +380,7 @@ class Graphs:
         # display the chart
         chart.save('graphs/genres_totalRevenue.html')
 
+
     @staticmethod
     def genres_averageRevenue():
         '''
@@ -424,7 +389,7 @@ class Graphs:
         and creates a bar chart showing average revenue by genre. The chart is saved as an HTML file.
         '''
 
-        # used to diable the default bahvior of Altiar that limited the max # of rows that can be displayed
+        # Used to diable the default bahvior of Altiar that limited the max # of rows that can be displayed
         alt.data_transformers.disable_max_rows()
 
         # Load the data
@@ -462,6 +427,7 @@ class Graphs:
 
         # display the chart
         chart.save('graphs/genres_averageRevenue.html')
+
 
     @staticmethod
     def actorType_averageRevenue():
@@ -515,6 +481,7 @@ class Graphs:
         # display chart
         chart.save('graphs/actorType_averageRevenue.html')
 
+
     @staticmethod
     def actorType_averageRating():
         '''
@@ -526,16 +493,16 @@ class Graphs:
         # load data
         data = pd.read_csv('data/master_dataset.csv')
 
-        # calculate average user rating for movies with A-list actors
+        # calculate average audience rating for movies with A-list actors
         alist_avg_rating = data[data['a_list'] == 1]['audience_rating'].mean()
 
-        # calculate average user rating for movies with top 100 actors
+        # calculate average audience rating for movies with top 100 actors
         top100_avg_rating = data[data['top_100'] == 1]['audience_rating'].mean()
 
-        # calculate average user rating for movies with top 1k actors
+        # calculate average audience rating for movies with top 1k actors
         top1k_avg_rating = data[data['top_1k'] == 1]['audience_rating'].mean()
 
-        # calculate average user rating for movies without top actors
+        # calculate average audience rating for movies without top actors
         no_top_avg_rating = data[(data['a_list'] == 0) & (data['top_100'] == 0) & (data['top_1k'] == 0)]['user_rating'].mean()
 
         # create a DataFrame to use for plotting
@@ -555,11 +522,11 @@ class Graphs:
         # create bar chart
         chart = alt.Chart(plot_data).mark_bar().encode(
             x=alt.X('actor_type', title='Actor Type', axis=alt.Axis(labelAngle=0),sort=['A List', 'Top 100', 'Top 1K', 'No Top Actors']),
-            y=alt.Y('average_rating', title='Average User Rating'),
+            y=alt.Y('average_rating', title='Average Audience Rating'),
             color=alt.Color('actor_type:N', legend=None, scale=alt.Scale(domain=list(color_scheme.keys()), range=list(color_scheme.values()))),
             tooltip=['actor_type:N', 'average_rating:Q']
         ).properties(
-            title='Top Actors vs User Ratings',
+            title='Top Actors vs Audience Ratings',
             width=400,
             height=400
         ).interactive()
@@ -567,6 +534,7 @@ class Graphs:
         # display chart
         chart.save('graphs/actorType_averageRating.html')
     
+
     @staticmethod
     def actorType_expertRating():
         '''
@@ -618,6 +586,7 @@ class Graphs:
         # display chart
         chart.save('graphs/actorType_expertRating.html')
 
+
     @staticmethod
     def releaseDate_avgRating():
         '''
@@ -656,6 +625,7 @@ class Graphs:
 
         # display the chart
         chart.save('graphs/releaseDate_avgRating.html')
+
 
     @staticmethod
     def budget_avgRevenue():

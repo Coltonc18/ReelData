@@ -33,7 +33,6 @@ def get_learning_dataset(label_column, remake_data=False, prefix='data/'):
                         'audience_count', 'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count', 
                         'a_list', 'top_100', 'top_1k']]
         
-        
         # Convert tomatometer_fresh/rotten_critics_count to percentages
         total_counts = df['tomatometer_rotten_critics_count'] + df['tomatometer_fresh_critics_count']
         df['tomatometer_fresh_percentage'] = df['tomatometer_fresh_critics_count'] / total_counts * 100
@@ -100,6 +99,7 @@ def get_learning_dataset(label_column, remake_data=False, prefix='data/'):
 
     # Return the datasets as a tuple
     return features, labels
+
 
 def regressive_model(label_column, error=10, remake_data=False):
     '''
@@ -170,6 +170,7 @@ def regressive_model(label_column, error=10, remake_data=False):
     plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain')
     plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest')
 
+
 def neural_network(label_column, remake_data=False):
     '''
     Uses a Sci-Kit Learn ``MultiLayer Perceptron`` in an attempt to predict the ratings and revenue of unseen movies based on their other factors
@@ -200,9 +201,8 @@ def neural_network(label_column, remake_data=False):
     labels = labels.values
     labels = labels.reshape((len(labels),)) # type: ignore
 
-    # TODO: REMOVE RANDOM STATE ONCE WORKING
     # Separate the data into training and testing datasets
-    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25, random_state=1)
+    features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.25)
 
     # Create a grid of hyper-parameters to test with the MLPRegressor
     param_grid = {
@@ -233,6 +233,7 @@ def neural_network(label_column, remake_data=False):
 
     # Return the average difference of the predictions vs labels for both testing and training data
     return abs(predict_test - labels_test).mean(), abs(predict_train - labels_train).mean() # type: ignore
+
 
 def plot_accuracies(accuracies, column, name, filepath, save=True):
     '''
