@@ -2,4 +2,3 @@ data/
 __pycache__/
 accuracy_graphs/
 graphs/
-* .ipynb
