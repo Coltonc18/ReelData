@@ -60,19 +60,19 @@ def merge_data(verbose=False, prefix='data/'):
                                                                              in actors.split(', ')) else 0)
 
     # Check if the 'rating_averages.csv' file exists
-    if not os.path.exists(f'{prefix}rating_averages.csv'):
+    if not os.path.exists('data/rating_averages.csv'):
         # If it doesn't exist, read the 'ratings.csv.gz' file and select only the 'movieId' and 'rating' columns
-        rating_df = pd.read_csv(f'{prefix}ratings.csv.gz', usecols=['movieId', 'rating'], compression='gzip', low_memory=False)
+        rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'rating'], compression='gzip', low_memory=False)
         # Calculate the average user rating of each movie as a Series
         rating_avgs = rating_df.groupby('movieId')['rating'].mean()
         # Multiply the mean rating by 20 to convert it to a 100-point scale and round to 3 decimal places
         rating_avgs = rating_avgs.apply(lambda n: round(n * 20, 3))
         print(f'Ratings average df has data for {len(rating_avgs)} movies') if verbose else None
         # Save the resulting dataframe to a new 'rating_averages.csv' file
-        rating_avgs.to_csv(f'{prefix}rating_averages.csv')
+        rating_avgs.to_csv('data/}rating_averages.csv')
     else:
         # If the 'rating_averages.csv' file exists, read it instead
-        rating_avgs = pd.read_csv(f'{prefix}rating_averages.csv') 
+        rating_avgs = pd.read_csv('data/rating_averages.csv') 
 
     # Load movie metadata from csv file
     metadata_df = pd.read_csv(f'{prefix}movies_metadata.csv', low_memory=False)
@@ -94,11 +94,11 @@ def merge_data(verbose=False, prefix='data/'):
     
     # RT Critic Ratings
     # review_score column created with the converted rating values
-    critic_df = pd.read_csv(f'{prefix}rotten_tomatoes_critic_reviews.csv')
+    critic_df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
     critic_df['review_score'] = critic_df.apply(_convert_ratings, axis='columns')
 
     # RT Audience Ratings and drop unused columns
-    audience_df = pd.read_csv(f'{prefix}rotten_tomatoes_movies.csv')
+    audience_df = pd.read_csv('data/rotten_tomatoes_movies.csv')
     audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime', 'genres'])
 
     # All RT Data
