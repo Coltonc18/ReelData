@@ -13,4 +13,5 @@
 9. graphing\_notebook.ipynb is a Jupyter Notebook which can *usually* display the graphs produced in an easier manner
 
 Directory should look like:
+
 ![](dependancies/Aspose.Words.2f31ee54-6578-4362-bc6d-f9815cbbbe8d.001.png)
