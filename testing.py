@@ -108,5 +108,6 @@ def test_master():
     master = master[master['title'].isin(titles)]
     master.to_csv('data/tests/master_dataset.csv')
 
+
 if __name__ == '__main__':
     run_all_tests()
