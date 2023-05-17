@@ -62,6 +62,8 @@ def test_learning():
     for column in learning.columns.to_list():
         assert_equals(True, (str(type(learning[column].to_list()[0])) in ["<class 'int'>", "<class 'float'>"]))
 
+    print('Passed Machine Learning Testing')
+
 
 def test_webscraping():
     # Read the scraped actors and cross reference them against what is seen on the site
@@ -74,7 +76,6 @@ def test_webscraping():
     for actor in {'Ryan Reynolds', 'Tom Cruise', 'Leonardo DiCaprio', 'Denzel Washington', 'Tom Hanks', 'Bradley Cooper', 
                   'Christian Bale', 'Hugh Jackman', 'Dwayne Johnson', 'Robert Downey Jr.', 'Brad Pitt', 'Mark Wahlberg', 'Ryan Gosling'}:
         assert_equals(True, actor in alist_set)
-
 
     print('Passed Webscraping Testing')
 
