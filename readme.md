@@ -14,4 +14,4 @@
 
 Directory should look like:
 
-![](dependancies/Aspose.Words.2f31ee54-6578-4362-bc6d-f9815cbbbe8d.001.png)
+![](dependencies/Aspose.Words.2f31ee54-6578-4362-bc6d-f9815cbbbe8d.001.png)
