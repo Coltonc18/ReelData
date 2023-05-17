@@ -52,7 +52,6 @@ def scrape_top_tier_actors(pages, test=False, prefix='data/'):
             alist_actors.add(soup_alist.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a')[0].get_text().strip())
         # Save to a pickle file for easy access later
         with open(f'{prefix}alist_actors.pickle', 'wb') as alist_pickle:
-            print(f'dumping {alist_actors}')
             pickle.dump(alist_actors, alist_pickle)
 
     # Scrape Top-100 Actors

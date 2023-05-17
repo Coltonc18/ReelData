@@ -11,6 +11,24 @@ from sklearn.tree import DecisionTreeRegressor
 # Initialize the seaborn library for graphing
 sns.set()
 
+def run_learning():
+    print('Doing Regressive ML...')
+    for col in ['revenue', 'audience', 'expert']:
+        regressive_model(col, error=10)
+
+    tests = []
+    trains = []
+    runs = 5
+    print('\nDoing Neural Network ML...')
+    for col in ['expert_rating', 'audience_rating', 'revenue']:
+        for i in range(runs):
+            test, train = neural_network(label_column=col, remake_data=False)
+            tests.append(test)
+            trains.append(train)
+        print(f'Average  testing difference over {runs} runs for column {col} = {round(np.mean(tests), 2)}')
+        print(f'Average training difference over {runs} runs for column {col} = {round(np.mean(trains), 2)}\n')
+
+
 def get_learning_dataset(label_column, remake_data=False, prefix='data/'):
     '''
     Gets or creates the Machine Learning specific dataset, then returns as a tuple of (features, labels)
@@ -169,6 +187,7 @@ def regressive_model(label_column, error=10, remake_data=False):
     # Plot the accuracy of the model based on the max_depth parameter to visualize the best-fit model
     plot_accuracies(accuracies, 'train accuracy', 'Train', f'accuracy_graphs/{label_column}_RegressorTrain')
     plot_accuracies(accuracies, 'test accuracy', 'Test', f'accuracy_graphs/{label_column}_RegressorTest')
+    print(f'DecisionTreeRegressor created for {label_column}. Accuracy graphs have been generated in accuracy_graphs/')
 
 
 def neural_network(label_column, remake_data=False):
@@ -262,22 +281,8 @@ def plot_accuracies(accuracies, column, name, filepath, save=True):
     # Save the graph
     if save:
         plt.savefig(filepath)
-    # Display the graph
-    plt.show()
+    # Display the graph in a popout
+    # plt.show()
 
 if __name__ == '__main__':
-    # neural_network(label_column='expert', remake_data=False)
-
-    # for col in ['revenue', 'audience', 'expert']:
-    #     regressive_model(col, error=10)
-
-    tests = []
-    trains = []
-    col = 'expert_rating'
-    runs = 5
-    for i in range(runs):
-        test, train = neural_network(label_column=col, remake_data=False)
-        tests.append(test)
-        trains.append(train)
-    print(f'Average  testing difference over {runs} runs for column {col} = {round(np.mean(tests), 2)}')
-    print(f'Average training difference over {runs} runs for column {col} = {round(np.mean(trains), 2)}')
+    run_learning()

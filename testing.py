@@ -10,15 +10,16 @@ from webscraping import scrape_top_tier_actors
 from graphs import Graphs
 
 def run_all_tests():
-    # create_test_datasets()
-    # test_merge()
-    # test_webscraping()
-    # test_master()
-    # test_learning()
+    create_test_datasets()
+    test_merge()
+    test_webscraping()
+    test_master()
+    test_learning()
     test_graphs()
 
 
 def create_test_datasets():
+    print('Compiling test datasets...')
     titles = ['Toy Story', 'Jumanji', 'Toy Story 2', 'Monsters, Inc.', 'Cars', 'Avatar', 'Toy Story 3', 'Cars 2', 'Cars 3']
 
     metadata = pd.read_csv('data/movies_metadata.csv')
@@ -141,8 +142,6 @@ def test_graphs():
     assert_equals(2787965087.0, genres[genres['genres'] == 'Action']['revenue'].sum())
 
     print('Passed Graphs Testing')
-
-
 
 
 if __name__ == '__main__':

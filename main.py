@@ -8,15 +8,35 @@ import numpy as np
 import pandas as pd
 
 from graphs import Graphs
+from learning import run_learning
+import testing
 from webscraping import scrape_top_tier_actors
 
 
 def main():
-    # merge_data()
+    # Merge the provided datasets to create the master DataFrame
+    print('--- Merging Datasets ---')
+    merge_data(verbose=True)
+    print('Done! Dataset stored as data/master_dataset.csv.\n')
 
+    # Create all of the graphs: will be stored in graphs folder. Open .html files with a web browser.
+    print('--- Creating Graphs ---')
     graph = Graphs()
+    # Create all graphs
     graph.create_graphs(all=True)
-    pass
+    # To create individual graphs, pass in the specific names of the graphs
+    graph.create_graphs('budget_avgRevenue', 'genres_expertRating')
+    print('Done! Check folder graphs/ for results.\n')
+
+    print('--- Machine Learning ---')
+    # Machine Learning accuracy is measured as the difference between predicted and actual value
+    # For example, a predicted rating of 85 for an actual rating of 79 would have a difference of 6
+    run_learning()
+
+    print('--- Unit Tests ---')
+    testing.run_all_tests()
+
+    print('\nThanks for choosing Reel Data for your movie analysis needs!')
 
 
 def merge_data(verbose=False, prefix='data/'):
@@ -36,7 +56,7 @@ def merge_data(verbose=False, prefix='data/'):
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
     # A-List actors
     if not os.path.exists(f'{prefix}alist_actors.pickle'):
-        print('File Not Found: Scraping A-List actors') if verbose else None
+        print('File data/alist_actors.pickle Not Found: Scraping A-List actors') if verbose else None
         scrape_top_tier_actors(pages=['alist'], prefix=prefix)
     with open(f'{prefix}alist_actors.pickle', 'rb') as file:
         alist_set = pickle.load(file)
@@ -44,7 +64,7 @@ def merge_data(verbose=False, prefix='data/'):
                                                                              in actors.split(', ')) else 0)
     # Top-100 actors
     if not os.path.exists(f'{prefix}top_100_actors.pickle'):
-        print('File Not Found: Scraping Top 100 actors') if verbose else None
+        print('File data/top_100_actors.pickle Not Found: Scraping Top 100 actors') if verbose else None
         scrape_top_tier_actors(pages=['top_100'], prefix=prefix)
     with open(f'{prefix}top_100_actors.pickle', 'rb') as file:
         top_100_set = pickle.load(file)
@@ -52,7 +72,7 @@ def merge_data(verbose=False, prefix='data/'):
                                                                               in actors.split(', ')) else 0)
     # Top-1000 actors
     if not os.path.exists(f'{prefix}top_1k_actors.pickle'):
-        print('File Not Found: Scraping Top 1000 actors') if verbose else None
+        print('File data/top_1k_actors.pickle Not Found: Scraping Top 1000 actors') if verbose else None
         scrape_top_tier_actors(pages=['top_1k'], prefix=prefix)
     with open(f'{prefix}top_1k_actors.pickle', 'rb') as file:
         top_1k_set = pickle.load(file)
@@ -69,7 +89,7 @@ def merge_data(verbose=False, prefix='data/'):
         rating_avgs = rating_avgs.apply(lambda n: round(n * 20, 3))
         print(f'Ratings average df has data for {len(rating_avgs)} movies') if verbose else None
         # Save the resulting dataframe to a new 'rating_averages.csv' file
-        rating_avgs.to_csv('data/}rating_averages.csv')
+        rating_avgs.to_csv('data/rating_averages.csv')
     else:
         # If the 'rating_averages.csv' file exists, read it instead
         rating_avgs = pd.read_csv('data/rating_averages.csv') 
@@ -129,13 +149,13 @@ def merge_data(verbose=False, prefix='data/'):
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
 
     # If verbose is true, print the length and columns of the merged dataframe
-    print(f'After second merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
+    print(f'After second merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rotten_tomatoes_df dataframe on the 'title' and 'movie_title' columns
     master_df = pd.merge(master_df, rotten_tomatoes_df, left_on='title', right_on='movie_title', how='left')
 
     # If verbose is true, print the length and columns of the merged dataframe
-    print(f'After third merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
+    print(f'After third merge, length is {len(master_df)}') if verbose else None
     
     # Reorder the columns and filter out a few
     master_df = master_df.loc[:, ['id', 'imdb_id', 'rotten_tomatoes_link', 'title', 'content_rating', 'budget', 
