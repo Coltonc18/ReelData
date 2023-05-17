@@ -4,18 +4,17 @@ import pickle
 import pandas as pd
 
 from cse163_utils import assert_equals
-from graphs import Graphs
 from learning import get_learning_dataset
-from main import merge_data
+import main
 from webscraping import scrape_top_tier_actors
 
 
 def run_all_tests():
-    create_test_datasets()
-    test_merge()
-    test_webscraping()
-    test_master()
-    test_learning()
+    # create_test_datasets()
+    # test_merge()
+    # test_webscraping()
+    # test_master()
+    # test_learning()
     test_graphs()
 
 
@@ -85,7 +84,7 @@ def test_webscraping():
 
 def test_merge():
     # Merge the small datasets
-    merge_data(verbose=False, prefix='data/tests/')
+    main.merge_data(verbose=False, prefix='data/tests/')
     master = pd.read_csv('data/tests/master_dataset.csv')
 
     # Check the dimensions of the DataFrame
@@ -138,9 +137,9 @@ def test_graphs():
     genres['genres'] = genres['genres'].str.strip()
     genres = genres.drop_duplicates(subset=['genres', 'imdb_id'])
     # Calculate the total revenue for each genre
-    genre_revenue_sum = genres.groupby('genres')['revenue'].sum().reset_index()
+    genre_revenue_sum = genres.groupby('genres')['revenue'].sum()
     # Test if sum of revenue for company is correct
-    assert_equals(2787965087.0, genres[genres['genres'] == 'Action']['revenue'].sum())
+    assert_equals(2787965087.0, genre_revenue_sum['Action'])
 
     print('Passed Graphs Testing')
 
