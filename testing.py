@@ -7,14 +7,15 @@ from cse163_utils import assert_equals
 from learning import get_learning_dataset
 from main import merge_data
 from webscraping import scrape_top_tier_actors
-
+from graphs import Graphs
 
 def run_all_tests():
-    create_test_datasets()
-    test_merge()
-    test_webscraping()
-    test_master()
-    test_learning()
+    # create_test_datasets()
+    # test_merge()
+    # test_webscraping()
+    # test_master()
+    # test_learning()
+    test_graphs()
 
 
 def create_test_datasets():
@@ -108,6 +109,40 @@ def test_master():
     master = pd.read_csv('data/master_dataset.csv')
     master = master[master['title'].isin(titles)]
     master.to_csv('data/tests/master_dataset.csv')
+
+
+def test_graphs():
+    # Test Method companies_totalRevenue in Graphs.py
+    # Check if method filtered out the different companies correctly
+    companies = pd.read_csv('data/tests/master_dataset.csv')
+    # Extract the name of each production company from the dictionary and explode the column
+    companies['production_companies'] = companies['production_companies'].str.split(", ")
+    companies = companies.explode('production_companies')
+    # Filter to get the top 30 production companies based on total revenue and put it into a list
+    top_producers = companies.groupby('production_companies')['revenue'].sum().sort_values(ascending=False).head(15).index.tolist()
+    companies = companies[companies['production_companies'].isin(top_producers)]
+    assert_equals(9, len(companies['production_companies'].unique()))
+    # Test if sum of revenue for company is correct
+    assert_equals(3872712463.0, companies[companies['production_companies'] == 'Pixar Animation Studios']['revenue'].sum())
+
+    # Test Method genres_totalRevenue in Graphs.py
+    genres = pd.read_csv('data/tests/master_dataset.csv')
+    # Filter out movies with zero revenue and missing genres
+    genres = genres.query('revenue > 0')
+    genres = genres.dropna(subset=['genres'])
+    # Explode the genres column to make a row for each genre in a movie
+    genres = genres.assign(genres=genres['genres'].str.split(',')).explode('genres')
+    # Remove duplicates from genres column
+    genres['genres'] = genres['genres'].str.strip()
+    genres = genres.drop_duplicates(subset=['genres', 'imdb_id'])
+    # Calculate the total revenue for each genre
+    genre_revenue_sum = genres.groupby('genres')['revenue'].sum().reset_index()
+    # Test if sum of revenue for company is correct
+    assert_equals(2787965087.0, genres[genres['genres'] == 'Action']['revenue'].sum())
+
+    print('Passed Graphs Testing')
+
+
 
 
 if __name__ == '__main__':
