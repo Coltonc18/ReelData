@@ -2,3 +2,4 @@ data/
 __pycache__/
 accuracy_graphs/
 graphs/
+graphing_notebook.ipynb
