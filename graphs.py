@@ -361,8 +361,6 @@ class Graphs:
 
         # Calculate the total revenue for each genre
         genre_revenue_sum = data.groupby('genres')['revenue'].sum().reset_index()
-        print("Total Revenue:")
-        print(genre_revenue_sum)
 
         # Create the bar graph showing revenue by genre
         chart = alt.Chart(genre_revenue_sum).mark_bar().encode(

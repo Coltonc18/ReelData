@@ -12,10 +12,10 @@ from webscraping import scrape_top_tier_actors
 
 
 def main():
-    merge_data()
+    # merge_data()
 
-    # graph = Graphs()
-    # graph.create_graphs(all=True)
+    graph = Graphs()
+    graph.create_graphs(all=True)
     pass
 
 
