@@ -28,7 +28,7 @@ def main():
     pass
 
 
-def scrape_top_tier_actors(pages, test=False):
+def scrape_top_tier_actors(pages, test=False, prefix='data/'):
     '''
     Scrapes A-List, Top 100, and Top 1000 actor lists from imdb.com and saves them as sets to .pickle files.
     Sets stored in a pickle are used for their O(1) efficiency when determining if an item is in the set.
@@ -51,7 +51,8 @@ def scrape_top_tier_actors(pages, test=False):
         for child in range(1, 14):
             alist_actors.add(soup_alist.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a')[0].get_text().strip())
         # Save to a pickle file for easy access later
-        with open('data/alist_actors.pickle', 'wb') as alist_pickle:
+        with open(f'{prefix}alist_actors.pickle', 'wb') as alist_pickle:
+            print(f'dumping {alist_actors}')
             pickle.dump(alist_actors, alist_pickle)
 
     # Scrape Top-100 Actors
@@ -66,7 +67,7 @@ def scrape_top_tier_actors(pages, test=False):
             actors_100.add(soup_100.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a'
                                         )[0].get_text().strip())
         # Save to a pickle file for easy access later
-        with open('data/top_100_actors.pickle', 'wb') as top100_pickle:
+        with open(f'{prefix}top_100_actors.pickle', 'wb') as top100_pickle:
             pickle.dump(actors_100, top100_pickle)
 
     # Scrape Top-1000 Actors
@@ -83,7 +84,7 @@ def scrape_top_tier_actors(pages, test=False):
                 actors_1k.add(soup_1k.select(f'div.lister-list > div:nth-child({child}) > div.lister-item-content > h3 > a'
                                             )[0].get_text().strip())
         # Save to a pickle file for easy access later
-        with open('data/top_1k_actors.pickle', 'wb') as top1k_pickle:
+        with open(f'{prefix}top_1k_actors.pickle', 'wb') as top1k_pickle:
             pickle.dump(actors_1k, top1k_pickle)
     
     # Test to ensure all actors in the 100 list also appear in the 1k list

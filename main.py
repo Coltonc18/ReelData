@@ -12,16 +12,16 @@ from webscraping import scrape_top_tier_actors
 
 
 def main():
-    # merge_data()
+    merge_data()
 
-    graph = Graphs()
-    graph.create_graphs(all=True)
+    # graph = Graphs()
+    # graph.create_graphs(all=True)
     pass
 
-def merge_data(verbose=False):
+def merge_data(verbose=False, prefix='data/'):
     # Read the 'credits.csv' file and select only the 'id' and 'cast' columns
     # Set low_memory=False to avoid warning about mixed dtypes in the 'cast' column
-    credits_df = pd.read_csv('data/credits.csv', usecols=['id', 'cast'], low_memory=False)
+    credits_df = pd.read_csv(f'{prefix}credits.csv', usecols=['id', 'cast'], low_memory=False)
 
     # Convert cast column to comma separated list
     credits_df['cast'] = credits_df['cast'].apply(json_to_columns, args=('name',))
@@ -34,49 +34,47 @@ def merge_data(verbose=False):
     # Create new columns in credits_df for each catagory of actor: A-List, Top 100, and Top 1000
     # Before making each column, assure the file exists containing the set of actors, and if it does not, scrape the web for it
     # A-List actors
-    if not os.path.exists('data/alist_actors.pickle'):
+    if not os.path.exists(f'{prefix}alist_actors.pickle'):
         print('File Not Found: Scraping A-List actors') if verbose else None
-        scrape_top_tier_actors(pages=['alist'])
-    with open('data/alist_actors.pickle', 'rb') as file:
+        scrape_top_tier_actors(pages=['alist'], prefix=prefix)
+    with open(f'{prefix}alist_actors.pickle', 'rb') as file:
         alist_set = pickle.load(file)
     credits_df['a_list'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in alist_set for actor 
                                                                              in actors.split(', ')) else 0)
     # Top-100 actors
-    if not os.path.exists('data/top_100_actors.pickle'):
+    if not os.path.exists(f'{prefix}top_100_actors.pickle'):
         print('File Not Found: Scraping Top 100 actors') if verbose else None
-        scrape_top_tier_actors(pages=['top_100'])
-    with open('data/top_100_actors.pickle', 'rb') as file:
+        scrape_top_tier_actors(pages=['top_100'], prefix=prefix)
+    with open(f'{prefix}top_100_actors.pickle', 'rb') as file:
         top_100_set = pickle.load(file)
     credits_df['top_100'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_100_set for actor 
                                                                               in actors.split(', ')) else 0)
     # Top-1000 actors
-    if not os.path.exists('data/top_1k_actors.pickle'):
+    if not os.path.exists(f'{prefix}top_1k_actors.pickle'):
         print('File Not Found: Scraping Top 1000 actors') if verbose else None
-        scrape_top_tier_actors(pages=['top_1k'])
-    with open('data/top_1k_actors.pickle', 'rb') as file:
+        scrape_top_tier_actors(pages=['top_1k'], prefix=prefix)
+    with open(f'{prefix}top_1k_actors.pickle', 'rb') as file:
         top_1k_set = pickle.load(file)
     credits_df['top_1k'] = credits_df['cast'].apply(lambda actors : 1 if any(actor in top_1k_set for actor 
                                                                              in actors.split(', ')) else 0)
-    # Read the 'links.csv' file and select only the 'movieId' and 'imdbId' columns
-    links_df = pd.read_csv('data/links.csv', usecols=['movieId', 'imdbId'], low_memory=False)
 
     # Check if the 'rating_averages.csv' file exists
-    if not os.path.exists('data/rating_averages.csv'):
+    if not os.path.exists(f'{prefix}rating_averages.csv'):
         # If it doesn't exist, read the 'ratings.csv.gz' file and select only the 'movieId' and 'rating' columns
-        rating_df = pd.read_csv('data/ratings.csv.gz', usecols=['movieId', 'rating'], compression='gzip', low_memory=False)
+        rating_df = pd.read_csv(f'{prefix}ratings.csv.gz', usecols=['movieId', 'rating'], compression='gzip', low_memory=False)
         # Calculate the average user rating of each movie as a Series
         rating_avgs = rating_df.groupby('movieId')['rating'].mean()
         # Multiply the mean rating by 20 to convert it to a 100-point scale and round to 3 decimal places
         rating_avgs = rating_avgs.apply(lambda n: round(n * 20, 3))
         print(f'Ratings average df has data for {len(rating_avgs)} movies') if verbose else None
         # Save the resulting dataframe to a new 'rating_averages.csv' file
-        rating_avgs.to_csv('data/rating_averages.csv')
+        rating_avgs.to_csv(f'{prefix}rating_averages.csv')
     else:
         # If the 'rating_averages.csv' file exists, read it instead
-        rating_avgs = pd.read_csv('data/rating_averages.csv') 
+        rating_avgs = pd.read_csv(f'{prefix}rating_averages.csv') 
 
     # Load movie metadata from csv file
-    metadata_df = pd.read_csv('data/movies_metadata.csv', low_memory=False)
+    metadata_df = pd.read_csv(f'{prefix}movies_metadata.csv', low_memory=False)
 
     # Remove rows that are not movies
     metadata_df = metadata_df[metadata_df['video'] == False]
@@ -95,11 +93,11 @@ def merge_data(verbose=False):
     
     # RT Critic Ratings
     # review_score column created with the converted rating values
-    critic_df = pd.read_csv('data/rotten_tomatoes_critic_reviews.csv')
+    critic_df = pd.read_csv(f'{prefix}rotten_tomatoes_critic_reviews.csv')
     critic_df['review_score'] = critic_df.apply(_convert_ratings, axis='columns')
 
     # RT Audience Ratings and drop unused columns
-    audience_df = pd.read_csv('data/rotten_tomatoes_movies.csv')
+    audience_df = pd.read_csv(f'{prefix}rotten_tomatoes_movies.csv')
     audience_df = audience_df.drop(axis='columns', labels=['movie_info', 'critics_consensus', 'runtime', 'genres'])
 
     # All RT Data
@@ -121,7 +119,7 @@ def merge_data(verbose=False):
     master_df = pd.merge(credits_df, metadata_df, on='id')
 
     # If verbose is true, print the length of the merged dataframe: should stay constant throughout upcoming merges
-    print(f'After FIRST merge, length is {len(master_df)}') if verbose else None
+    print(f'After first merge, length is {len(master_df)}') if verbose else None
 
     # Merge the new dataframe with the rating_avg dataframe on the 'id' and 'movieId' columns
     master_df = pd.merge(master_df, rating_avgs, left_on='id', right_on='movieId', how='left')
@@ -130,19 +128,13 @@ def merge_data(verbose=False):
     master_df.rename(columns={'rating': 'user_rating'}, inplace=True)
 
     # If verbose is true, print the length and columns of the merged dataframe
-    print(f'After SECOND merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
-
-    # Merge the new dataframe with the links dataframe on the 'id' and 'movieId' columns
-    master_df = pd.merge(master_df, links_df, left_on='id', right_on='movieId', how='left')
-
-    # If verbose is true, print the length and columns of the merged dataframe
-    print(f'After THIRD merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
+    print(f'After second merge, length is {len(master_df)}, cols are {master_df.columns}') if verbose else None
 
     # Merge the new dataframe with the rotten_tomatoes_df dataframe on the 'title' and 'movie_title' columns
     master_df = pd.merge(master_df, rotten_tomatoes_df, left_on='title', right_on='movie_title', how='left')
 
     # If verbose is true, print the length and columns of the merged dataframe
-    print(f'After FOURTH merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
+    print(f'After third merge, length is {len(master_df)}\nColumns are: {master_df.columns}') if verbose else None
     
     # Reorder the columns and filter out a few
     master_df = master_df.loc[:, ['id', 'imdb_id', 'rotten_tomatoes_link', 'title', 'content_rating', 'budget', 
@@ -157,7 +149,7 @@ def merge_data(verbose=False):
     master_df.rename({'review_score': 'calc_RT_rating', 'review_type': 'RT_expert_class', 'tomatometer_rating': 'RT_expert_rating'}, axis='columns', inplace=True)
     
     # Save the dataframe to a file
-    master_df.to_csv("data/master_dataset.csv", index=False)
+    master_df.to_csv(f'{prefix}master_dataset.csv', index=False)
 
 def _convert_ratings(row):
     '''
@@ -253,7 +245,7 @@ def test_times():
 
     Tests the time difference between opening a csv file vs a gzipped csv file of the same data
     '''
-    for file in ['credits', 'keywords', 'links', 'movies_metadata', 'ratings']:
+    for file in ['credits', 'movies_metadata', 'ratings']:
         t1 = time.time()
         credits = pd.read_csv(f'data/gzips/{file}.csv.gz', compression='gzip')
         t2 = time.time()

@@ -11,7 +11,7 @@ from sklearn.tree import DecisionTreeRegressor
 # Initialize the seaborn library for graphing
 sns.set()
 
-def get_learning_dataset(label_column, remake_data=False):
+def get_learning_dataset(label_column, remake_data=False, prefix='data/'):
     '''
     Gets or creates the Machine Learning specific dataset, then returns as a tuple of (features, labels)
     
@@ -25,7 +25,7 @@ def get_learning_dataset(label_column, remake_data=False):
     # Remake the dataset if remake_data is True
     if remake_data:
         # Read in and filter the master dataset to the desired columns for Machine Learning
-        df = pd.read_csv('data/master_dataset.csv')
+        df = pd.read_csv(f'{prefix}master_dataset.csv')
         df = df.loc[:, ['content_rating', 'budget', 'revenue', 'calc_RT_rating', 'release_date', 
                         'runtime', 'user_rating', 'genres', 'original_language', 'production_companies', 
                         'production_countries', 'directors', 'authors', 'cast', 'tomatometer_status', 
@@ -68,11 +68,11 @@ def get_learning_dataset(label_column, remake_data=False):
         df = pd.concat([pd.get_dummies(df), encoded_df], axis=1)
 
         # Save new dataset to a csv file
-        df.to_csv('data/learning.csv', index=False)
+        df.to_csv(f'{prefix}learning.csv', index=False)
 
     else:
         # If we don't need to recreate the data, just read it in from the .csv file
-        df = pd.read_csv('data/learning.csv', low_memory=False)
+        df = pd.read_csv(f'{prefix}learning.csv', low_memory=False)
 
     # Filter down the columns of the DataFrame based on which label_column was chosen
     if 'revenue' in label_column:
